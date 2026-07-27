@@ -14,3 +14,18 @@ class Vector:
 
     def dump(self):
         return self.data
+
+    @staticmethod
+    def Zero(self, data):
+        vec = Vector(data)
+        for i in vec.data:
+            vec.set(i, 0)
+        return vec
+
+    def zero(self):
+        for i in range(len(self.data)):
+            self.data[i] = 0
+
+    def log(self):
+        for i in range(len(self.data)):
+            print(self.data[i])
