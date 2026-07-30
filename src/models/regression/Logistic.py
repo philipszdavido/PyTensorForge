@@ -20,9 +20,10 @@ class Logistic:
         self.X = X
         return sigmoid(np.dot(X, self.W.data) + self.b.data)
 
-    def backward(self, gradient):
-        self.dW.data = gradient * self.X.data
-        self.db.data = gradient
+    def backward(self, grad_output):
+        self.dW.data = grad_output * self.X.data
+        self.db.data = grad_output
+        return grad_output * self.W.data
 
     def update(self, learning_rate):
         self.W.data -= learning_rate * self.dW.data
