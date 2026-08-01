@@ -24,6 +24,12 @@ class Linear:
         self.X = X
         return np.dot(X, self.W.data) + self.b.data
 
+    def grads(self):
+        return [self.dW, self.db]
+
+    def parameters(self):
+        return [self.W, self.b]
+
     def backward(self, grad_output):
         # L = pred - target
         # u = pred - target
@@ -36,8 +42,8 @@ class Linear:
         # dL/dW = dL/dpred * dpred/dW
         # dpred/dW = X
         # dL/dW = (pred - target) * X
-        self.dW.data = grad_output * self.X.data
-        self.db.data = grad_output
+        self.dW.data += grad_output * self.X.data
+        self.db.data += grad_output
         return grad_output * self.W.data
 
     def update(self, learning_rate):
