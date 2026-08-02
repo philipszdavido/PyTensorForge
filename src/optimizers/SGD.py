@@ -1,4 +1,4 @@
-from src.optimizer.Optimizer import Optimizer
+from src.optimizers.Optimizer import Optimizer
 
 
 class SGD(Optimizer):
@@ -10,5 +10,13 @@ class SGD(Optimizer):
             p.data -= self.learning_rate * grad.data
 
 class SGDescent:
-    def __call__(self, learning_rate = 0.01):
-        pass
+    def __init__(self, lr=0.01): self.lr = lr
+
+    def step(self, params):
+        for p in params:
+            if p.requires_grad:
+                p.data -= self.lr * p.grad
+
+    def zero_grad(self, params):
+        for p in params:
+            p.zero_grad()
