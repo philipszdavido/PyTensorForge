@@ -20,7 +20,7 @@ class Tensor:
     def __init__(
             self,
             data,
-            requires_grad=False,
+            requires_grad=True,
             parents=(),
             op=None,
     ):
@@ -53,7 +53,7 @@ class Tensor:
         )
 
     def __repr__(self):
-        return f"Tensor({self.data})"
+        return f"Tensor(data={self.data}, grad={self.grad}, requires_grad={self.requires_grad})"
 
     def __add__(self, other):
         if not isinstance(other, Tensor):
@@ -89,13 +89,20 @@ class Tensor:
             op="Sub",
         )
 
-        def _backward():
+        def _backward_():
             # out = self - other
             # 𝜹out/𝜹self = 1 - 0 = 1
             self.grad += out.grad * 1
             # 𝜹out/𝜹other = 0 - 1 = -1
             other.grad += out.grad * (-1)
-            pass
+
+        def _backward():
+            if self.requires_grad:
+                self.grad += unbroadcast(out.grad, self.shape)
+
+            if other.requires_grad:
+                other.grad += unbroadcast(-out.grad, other.shape)
+
         out._backward = _backward
         return out
 
@@ -110,13 +117,27 @@ class Tensor:
             op="Mul",
         )
 
-        def _backward():
+        def _backward_():
             # out = self * other
             # 𝜹out/𝜹self = other
             self.grad += out.grad * other.data
             # out = self * other
             # 𝜹out/𝜹other = self
             other.grad += out.grad * self.data
+
+        def _backward():
+            if self.requires_grad:
+                self.grad += unbroadcast(
+                    out.grad * other.data,
+                    self.shape,
+                )
+
+            if other.requires_grad:
+                other.grad += unbroadcast(
+                    out.grad * self.data,
+                    other.shape,
+                )
+
         out._backward = _backward
         return out
 
@@ -197,6 +218,68 @@ class Tensor:
             self.grad += out.grad * np.ones_like(self.data) / self.data.size
         out._backward = _backward
         return out
+
+    def sum(self):
+        out = Tensor(
+            self.data.sum(),
+            requires_grad=self.requires_grad,
+            parents=(self,),
+            op="Sum",
+        )
+
+        def _backward():
+            if self.requires_grad:
+                self.grad += out.grad * np.ones_like(self.data)
+
+        out._backward = _backward
+        return out
+
+    def __truediv__(self, other):
+        if not isinstance(other, Tensor):
+            other = Tensor(other)
+
+        out = Tensor(
+            self.data / other.data,
+            requires_grad=self.requires_grad or other.requires_grad,
+            parents=(self, other),
+            op="Div",
+        )
+
+        def _backward_():
+            if self.requires_grad:
+                self.grad += out.grad / other.data
+
+            if other.requires_grad:
+                other.grad -= out.grad * self.data / (other.data ** 2)
+
+        def _backward():
+
+            if self.requires_grad:
+                self.grad += unbroadcast(
+                    out.grad / other.data,
+                    self.shape,
+                )
+
+            if other.requires_grad:
+                other.grad += unbroadcast(
+                    -out.grad * self.data / (other.data ** 2),
+                    other.shape,
+                )
+
+        out._backward = _backward
+        return out
+
+    def __rtruediv__(self, other):
+        return Tensor(other) / self
+
+    def __radd__(self, other):
+        return self + other
+
+    def __rmul__(self, other):
+        return self * other
+
+    def __rsub__(self, other):
+        return Tensor(other) - self
 
     def backward(self):
         # impl DAG topo
