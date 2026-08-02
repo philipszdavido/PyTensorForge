@@ -3,7 +3,7 @@ from .SGD import SGDescent
 # from .AdamW import AdamW
 
 optimizers = {
-    "sgd": SGDescent,
+    "sgd": SGDescent(),
     # "adam": Adam,
     # "adamw": AdamW,
 }
