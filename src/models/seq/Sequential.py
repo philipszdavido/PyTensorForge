@@ -1,5 +1,6 @@
 import numpy as np
-
+from src.loss import losses
+from src.optimizers import optimizers
 
 class Sequential:
 
@@ -25,8 +26,8 @@ class Sequential:
         optimizer="adam",
         metrics=None,
     ):
-        self.loss = loss
-        self.optimizer = optimizer
+        self.loss = losses[loss]
+        self.optimizer = optimizers[optimizer]
         self.metrics = metrics or []
 
     def fit(
@@ -55,7 +56,7 @@ class Sequential:
                 loss = self.loss(predictions, yb)
                 epoch_loss += loss
 
-                self.loss.backward()
+                loss.backward()
 
                 self.optimizer.step(self.parameters())
 
@@ -64,7 +65,7 @@ class Sequential:
             if verbose:
                 print(
                     f"Epoch {epoch + 1}/{epochs} "
-                    f"loss={epoch_loss:.4f}"
+                    f"loss={epoch_loss.data:.4f}"
                 )
 
     def parameters(self):
