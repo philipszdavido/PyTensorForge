@@ -50,7 +50,7 @@ Import components from the package and build models using the provided modules. 
 from src.neural.Dense import Dense
 from src.neural.Layer import Layer
 from src.optimizers.SGD import SGD
-from src.loss.mse import MSE
+from src.loss.MSE import MSE
 ```
 
 Refer to the `test/` directory for example scripts and usage patterns.
