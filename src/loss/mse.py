@@ -8,3 +8,11 @@ class MSELoss(Loss):
 
     def backward(self, pred, target):
         return pred - target
+
+class MSE:
+
+    def __call__(self, prediction, target):
+
+        diff = prediction - target
+
+        return (diff * diff).mean()
