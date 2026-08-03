@@ -1,41 +1,23 @@
 import numpy as np
 
 from src.neural.Layer import Layer
-from src.initializers import (
-    GlorotUniform,
-    HeUniform,
-    LecunUniform,
-    Zeros,
-)
-from src.activations import (
-    ReLU,
-    Tanh,
-    Sigmoid,
-    ELU,
-    SELU,
-)
-
-initializer_fns = {
-    "glorot_uniform": GlorotUniform(),
-    "he_uniform": HeUniform(),
-    "lecun_uniform": LecunUniform(),
-    "zeros": Zeros(),
-}
-
-activation_fns = {
-    "relu": ReLU(),
-    "tanh": Tanh(),
-    "sigmoid": Sigmoid(),
-    "elu": ELU(),
-    "selu": SELU(),
-}
+from src.initializers import initializer_fns
+from src.activations import activation_fns
 
 
 class Dense(Layer):
-    def __init__(self, units, activation=None):
+    def __init__(self, units, activation=None,
+        kernel_initializer = "glorot_uniform",
+        bias_initializer = "zeros",
+        trainable = True,
+    ):
         super().__init__()
         self.units = units
         self.activation = activation
+
+        self.kernel_initializer = kernel_initializer
+        self.bias_initializer = bias_initializer
+        self.trainable = trainable
 
         self.kernel = None
         self.bias = None
@@ -46,25 +28,17 @@ class Dense(Layer):
         self.kernel = self.add_weight(
             # row = in_features, column = units
             shape=(in_features, self.units),
-            initializer="glorot_uniform",
-            trainable=True,
+            initializer=self.kernel_initializer,
+            trainable=self.trainable,
             name="kernel",
         )
 
         self.bias = self.add_weight(
             shape=(self.units,),
-            initializer="zeros",
-            trainable=True,
+            initializer=self.bias_initializer,
+            trainable=self.trainable,
             name="bias",
         )
-
-    def call_(self, inputs):
-        output = np.matmul(inputs, self.kernel.data) + self.bias.data
-
-        if self.activation is not None:
-            output = activation_fns[self.activation](output)
-
-        return output
 
     def call(self, inputs):
         output = inputs @ self.kernel
