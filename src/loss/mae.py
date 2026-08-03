@@ -8,3 +8,9 @@ class MAELoss(Loss):
 
     def backward(self, pred, target):
         return np.sign(pred - target)
+
+class MAE:
+
+    def __call__(self, prediction, target):
+
+        return (prediction - target).abs().mean()

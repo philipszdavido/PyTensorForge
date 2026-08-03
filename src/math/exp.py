@@ -1,29 +1,27 @@
 import numpy as np
 
-from src.activations.Activation import Activation
 from src.core.Tensor import Tensor
 
 
-class Tanh(Activation):
+class Exp:
 
     @staticmethod
     def forward(x):
-        t = np.tanh(x.data)
+
+        e = np.exp(x.data)
 
         out = Tensor(
-            t,
+            e,
             requires_grad=x.requires_grad,
             parents=(x,),
-            op="Tanh",
+            op="Exp",
         )
 
         def _backward():
+
             if x.requires_grad:
-                x.grad += out.grad * (1 - t * t)
+                x.grad += out.grad * e
 
         out._backward = _backward
 
         return out
-
-    def __call__(self, x):
-        return x.tanh()

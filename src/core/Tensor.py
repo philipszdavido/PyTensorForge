@@ -1,5 +1,10 @@
 import numpy as np
 
+from src.activations import ReLU, Sigmoid, Tanh, Softmax
+from src.math.exp import Exp
+from src.math.log import Log
+
+
 # x = Tensor([[1, 2],
 #             [3, 4]], requires_grad=True)
 #
@@ -282,56 +287,36 @@ class Tensor:
         return Tensor(other) - self
 
     def relu(self):
-        out = Tensor(
-            np.maximum(0, self.data),
-            requires_grad=self.requires_grad,
-            parents=(self,),
-            op="ReLU",
-        )
-
-        def _backward():
-            if self.requires_grad:
-                self.grad += out.grad * (self.data > 0)
-
-        out._backward = _backward
-
-        return out
+        return ReLU.forward(self)
+        # out = Tensor(
+        #     np.maximum(0, self.data),
+        #     requires_grad=self.requires_grad,
+        #     parents=(self,),
+        #     op="ReLU",
+        # )
+        #
+        # def _backward():
+        #     if self.requires_grad:
+        #         self.grad += out.grad * (self.data > 0)
+        #
+        # out._backward = _backward
+        #
+        # return out
 
     def sigmoid(self):
-        sig = 1.0 / (1.0 + np.exp(-self.data))
-
-        out = Tensor(
-            sig,
-            requires_grad=self.requires_grad,
-            parents=(self,),
-            op="Sigmoid",
-        )
-
-        def _backward():
-            if self.requires_grad:
-                self.grad += out.grad * sig * (1 - sig)
-
-        out._backward = _backward
-
-        return out
+        return Sigmoid.forward(self)
 
     def tanh(self):
-        t = np.tanh(self.data)
+       return Tanh.forward(self)
 
-        out = Tensor(
-            t,
-            requires_grad=self.requires_grad,
-            parents=(self,),
-            op="Tanh",
-        )
+    def log(self):
+        return Log.forward(self)
 
-        def _backward():
-            if self.requires_grad:
-                self.grad += out.grad * (1 - t * t)
+    def exp(self):
+        return Exp.forward(self)
 
-        out._backward = _backward
-
-        return out
+    def softmax(self):
+        return Softmax.forward(self)
 
     def backward(self):
         # impl DAG topo
