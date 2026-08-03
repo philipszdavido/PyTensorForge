@@ -54,6 +54,15 @@ class Tensor:
 
     def __getitem__(self, idx):
 
+        if isinstance(idx, Tensor):
+            idx = idx.data.astype(np.int64)
+
+        elif isinstance(idx, tuple):
+            idx = tuple(
+                i.data.astype(np.int64) if isinstance(i, Tensor) else i
+                for i in idx
+            )
+
         out = Tensor(
             self.data[idx],
             requires_grad=self.requires_grad,
@@ -141,8 +150,24 @@ class Tensor:
         out._backward = _backward
         return out
 
+    # def __neg__(self):
+    #     return self * -1
+
     def __neg__(self):
-        return self * -1
+        out = Tensor(
+            -self.data,
+            requires_grad=self.requires_grad,
+            parents=(self,),
+            op="Neg",
+        )
+
+        def _backward():
+            if self.requires_grad:
+                self.grad -= out.grad
+
+        out._backward = _backward
+
+        return out
 
     def __mul__(self, other):
         if not isinstance(other, Tensor):
@@ -243,33 +268,93 @@ class Tensor:
         out._backward = _backward
         return out
 
-    def mean(self):
-        # data is an array
+    # def mean(self):
+    #     out = Tensor(
+    #         self.data.mean(),
+    #         requires_grad=self.requires_grad,
+    #         parents=(self,),
+    #         op="Mean",
+    #     )
+    #
+    #     def _backward():
+    #         self.grad += out.grad * np.ones_like(self.data) / self.data.size
+    #     out._backward = _backward
+    #     return out
+
+    def mean(self, axis=None, keepdims=False):
         out = Tensor(
-            self.data.mean(),
+            self.data.mean(axis=axis, keepdims=keepdims),
             requires_grad=self.requires_grad,
             parents=(self,),
             op="Mean",
         )
 
         def _backward():
-            self.grad += out.grad * np.ones_like(self.data) / self.data.size
+            if not self.requires_grad:
+                return
+
+            grad = out.grad
+
+            if axis is None:
+                count = self.data.size
+            else:
+                axes = axis if isinstance(axis, tuple) else (axis,)
+                count = 1
+                for ax in axes:
+                    count *= self.data.shape[ax]
+
+                if not keepdims:
+                    for ax in sorted([a if a >= 0 else a + self.data.ndim for a in axes]):
+                        grad = np.expand_dims(grad, axis=ax)
+
+            grad = np.broadcast_to(grad, self.data.shape)
+
+            self.grad += grad / count
+
         out._backward = _backward
+
         return out
 
-    def sum(self):
+    # def sum(self):
+    #     out = Tensor(
+    #         self.data.sum(),
+    #         requires_grad=self.requires_grad,
+    #         parents=(self,),
+    #         op="Sum",
+    #     )
+    #
+    #     def _backward():
+    #         if self.requires_grad:
+    #             self.grad += out.grad * np.ones_like(self.data)
+    #
+    #     out._backward = _backward
+    #     return out
+
+    def sum(self, axis=None, keepdims=False):
         out = Tensor(
-            self.data.sum(),
+            self.data.sum(axis=axis, keepdims=keepdims),
             requires_grad=self.requires_grad,
             parents=(self,),
             op="Sum",
         )
 
         def _backward():
-            if self.requires_grad:
-                self.grad += out.grad * np.ones_like(self.data)
+            if not self.requires_grad:
+                return
+
+            grad = out.grad
+
+            if axis is not None and not keepdims:
+                axes = axis if isinstance(axis, tuple) else (axis,)
+                for ax in sorted([a if a >= 0 else a + self.data.ndim for a in axes]):
+                    grad = np.expand_dims(grad, axis=ax)
+
+            grad = np.broadcast_to(grad, self.data.shape)
+
+            self.grad += grad
 
         out._backward = _backward
+
         return out
 
     def __truediv__(self, other):
@@ -473,3 +558,19 @@ class Tensor:
         self.grad = self.grad = np.ones_like(self.data)
         for t in reversed(topo):
             t._backward()
+
+    @classmethod
+    def arange(
+            cls,
+            start,
+            stop=None,
+            step=1,
+            requires_grad=False,
+    ):
+        if stop is None:
+            start, stop = 0, start
+
+        return cls(
+            np.arange(start, stop, step, dtype=np.float32),
+            requires_grad=requires_grad,
+        )
