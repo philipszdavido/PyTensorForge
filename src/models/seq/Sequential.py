@@ -1,6 +1,11 @@
 import numpy as np
 from src.loss import losses
 from src.optimizers import optimizers
+import json
+import pickle
+
+from src.serialization.modelio import ModelIO
+
 
 class Sequential:
 
@@ -169,3 +174,25 @@ class Sequential:
             X = layer(X)
             predictions.append(X)
         return X
+
+    def state_dict(self):
+
+        state = {}
+
+        for i, layer in enumerate(self.layers):
+            state[f"layer_{i}"] = layer.state_dict()
+
+        return state
+
+    def load_state_dict(self, state):
+
+        for i, layer in enumerate(self.layers):
+            layer.load_state_dict(
+                state[f"layer_{i}"]
+            )
+
+    def save(self, path):
+        ModelIO.save(self, path)
+
+    def load(self, path):
+        ModelIO.load(self, path)
