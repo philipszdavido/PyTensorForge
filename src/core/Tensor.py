@@ -1,10 +1,5 @@
 import numpy as np
 
-from src.activations import ReLU, Sigmoid, Tanh, Softmax
-from src.math.exp import Exp
-from src.math.log import Log
-
-
 # x = Tensor([[1, 2],
 #             [3, 4]], requires_grad=True)
 #
@@ -110,6 +105,9 @@ class Tensor:
 
         out._backward = _backward
         return out
+
+    def __neg__(self):
+        return self * -1
 
     def __mul__(self, other):
         if not isinstance(other, Tensor):
@@ -287,6 +285,7 @@ class Tensor:
         return Tensor(other) - self
 
     def relu(self):
+        from src.activations.ReLU import ReLU
         return ReLU.forward(self)
         # out = Tensor(
         #     np.maximum(0, self.data),
@@ -304,19 +303,29 @@ class Tensor:
         # return out
 
     def sigmoid(self):
+        from src.activations import Sigmoid
+
         return Sigmoid.forward(self)
 
     def tanh(self):
-       return Tanh.forward(self)
+        from src.activations import Tanh
+        return Tanh.forward(self)
 
     def log(self):
+        from src.math.log import Log
         return Log.forward(self)
 
     def exp(self):
+        from src.math.exp import Exp
         return Exp.forward(self)
 
     def softmax(self):
+        from src.activations import Softmax
         return Softmax.forward(self)
+
+    def clip(self, min_value, max_value):
+        from src.math.clip import Clip
+        return Clip.forward(self, min_value, max_value)
 
     def backward(self):
         # impl DAG topo

@@ -6,7 +6,7 @@ from src.math.sigmoid import sigmoid
 class Sigmoid(Activation):
     @staticmethod
     def forward(x):
-        sig = sigmoid(x)
+        sig = sigmoid(x.data)
 
         out = Tensor(
             sig,

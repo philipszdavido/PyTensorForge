@@ -4,6 +4,6 @@ from .AdamW import AdamW
 
 optimizers = {
     "sgd": SGDescent(),
-    "adam": Adam,
-    "adamw": AdamW,
+    "adam": Adam(),
+    "adamw": AdamW(),
 }
