@@ -1,4 +1,4 @@
-from src.optimizer.Optimizer import Optimizer
+from src.optimizers.Optimizer import Optimizer
 
 
 class Batch(Optimizer):
