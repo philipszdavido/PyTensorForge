@@ -49,3 +49,18 @@ class Layer:
 
     def parameters(self):
         return self.trainable_weights
+
+    def state_dict(self):
+        state = {}
+
+        for p in self.parameters():
+            state[p.name] = p.data.copy()
+
+        return state
+
+    def load_state_dict(self, state):
+
+        for p in self.parameters():
+
+            if p.name in state:
+                p.data[:] = state[p.name]
