@@ -75,7 +75,7 @@ class Sequential:
 
         return params
 
-    def summary(self):
+    def summary_(self):
         print("Sequential")
         print("-------------------------")
 
@@ -89,6 +89,79 @@ class Sequential:
 
         print("-------------------------")
         print("Total params:", total)
+
+    def summary(self):
+
+        print("=" * 80)
+        print(f'{"Model: Sequential":^80}')
+        print("=" * 80)
+
+        print(
+            f'{"Layer (type)":30}'
+            f'{"Output Shape":25}'
+            f'{"Param #":>15}'
+        )
+
+        print("-" * 80)
+
+        total = 0
+        trainable = 0
+        non_trainable = 0
+
+        shape = None
+
+        for layer in self.layers:
+
+            params = 0
+
+            for p in layer.parameters():
+                count = int(np.prod(p.shape))
+                params += count
+                total += count
+
+                if p.trainable:
+                    trainable += count
+                else:
+                    non_trainable += count
+
+            output_shape = (
+                str(layer.output_shape)
+                if hasattr(layer, "output_shape")
+                else "?"
+            )
+
+            print(
+                f"{layer.__class__.__name__:30}"
+                f"{output_shape:25}"
+                f"{params:>15,}"
+            )
+
+        print("-" * 80)
+
+        print(f"{'Total params:':30}{total:>20,}")
+        print(f"{'Trainable params:':30}{trainable:>20,}")
+        print(f"{'Non-trainable params:':30}{non_trainable:>20,}")
+
+        print("=" * 80)
+
+        if self.optimizer is not None:
+            print(f"Optimizer : {self.optimizer.__class__.__name__}")
+
+        if self.loss is not None:
+            print(f"Loss      : {self.loss.__class__.__name__}")
+
+        if self.metrics:
+            print(
+                "Metrics   : "
+                + ", ".join(
+                    metric.__class__.__name__
+                    if not isinstance(metric, str)
+                    else metric
+                    for metric in self.metrics
+                )
+            )
+
+        print("=" * 80)
 
     def predict(self, X):
         predictions = []
