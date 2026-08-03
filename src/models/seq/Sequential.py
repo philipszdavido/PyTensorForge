@@ -22,8 +22,8 @@ class Sequential:
 
     def compile(
         self,
-        loss="categorical_crossentropy",
-        optimizer="adam",
+        loss,
+        optimizer,
         metrics=None,
     ):
         self.loss = losses[loss]
@@ -51,22 +51,21 @@ class Sequential:
                 xb = X[start:end]
                 yb = y[start:end]
 
+                self.optimizer.zero_grad(self.parameters())
+
                 predictions = self(xb)
 
                 loss = self.loss(predictions, yb)
-                epoch_loss += loss
+                epoch_loss += loss.data.item()
 
                 loss.backward()
 
                 self.optimizer.step(self.parameters())
 
-                self.optimizer.zero_grad(self.parameters())
+                # self.optimizer.zero_grad(self.parameters())
 
             if verbose:
-                print(
-                    f"Epoch {epoch + 1}/{epochs} "
-                    f"loss={epoch_loss.data:.4f}"
-                )
+                print(f"Epoch {epoch + 1}/{epochs} loss={epoch_loss:.4f}")
 
     def parameters(self):
         params = []
@@ -90,3 +89,10 @@ class Sequential:
 
         print("-------------------------")
         print("Total params:", total)
+
+    def predict(self, X):
+        predictions = []
+        for layer in self.layers:
+            X = layer(X)
+            predictions.append(X)
+        return X
