@@ -1,18 +1,5 @@
 from src.neural.Parameter import Parameter
-from src.initializers import (
-    GlorotUniform,
-    HeUniform,
-    LecunUniform,
-    Zeros,
-)
-
-initializer_fns = {
-    "glorot_uniform": GlorotUniform(),
-    "he_uniform": HeUniform(),
-    "lecun_uniform": LecunUniform(),
-    "zeros": Zeros(),
-}
-
+from src.initializers import initializer_fns
 
 class Layer:
     def __init__(self):
@@ -42,7 +29,8 @@ class Layer:
         trainable=True,
         name=None,
     ):
-        value = initializer_fns[initializer](shape)
+        init = initializer_fns[initializer]
+        value = init(shape)
 
         parameter = Parameter(
             data=value,
