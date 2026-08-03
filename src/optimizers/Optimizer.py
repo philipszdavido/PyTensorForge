@@ -10,3 +10,9 @@ class Optimizer:
 
     def step(self):
         raise NotImplementedError
+
+class SerialOptimizer:
+    def state_dict(self):
+        raise NotImplementedError
+    def load_state_dict(self, state):
+        raise NotImplementedError

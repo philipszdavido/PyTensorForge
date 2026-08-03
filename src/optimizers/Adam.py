@@ -1,7 +1,9 @@
 import numpy as np
 
+from src.optimizers.Optimizer import SerialOptimizer
 
-class Adam:
+
+class Adam(SerialOptimizer):
 
     def __init__(
         self,
@@ -57,3 +59,19 @@ class Adam:
     def zero_grad(self, params):
         for p in params:
             p.zero_grad()
+
+    def state_dict(self):
+
+        return {
+            "m": self.m,
+            "v": self.v,
+            "t": self.t,
+            "lr": self.lr
+        }
+
+    def load_state_dict(self, state):
+
+        self.m = state["m"]
+        self.v = state["v"]
+        self.t = state["t"]
+        self.lr = state["lr"]

@@ -1,7 +1,9 @@
 import numpy as np
 
+from src.optimizers.Optimizer import SerialOptimizer
 
-class AdamW:
+
+class AdamW(SerialOptimizer):
 
     def __init__(
         self,
