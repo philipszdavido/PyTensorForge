@@ -46,11 +46,46 @@ class Tensor:
     def __len__(self):
         return self.data.shape[0]
 
+    # def __getitem__(self, idx):
+    #     return Tensor(
+    #         self.data[idx],
+    #         requires_grad=self.requires_grad,
+    #     )
+
     def __getitem__(self, idx):
-        return Tensor(
+
+        out = Tensor(
             self.data[idx],
             requires_grad=self.requires_grad,
+            parents=(self,),
+            op="Slice",
         )
+
+        def _backward():
+            if not self.requires_grad:
+                return
+
+            np.add.at(
+                self.grad,
+                idx,
+                out.grad,
+            )
+
+        out._backward = _backward
+
+        return out
+
+    @staticmethod
+    def zeros(shape, requires_grad=False):
+        return Tensor(
+            np.zeros(shape, dtype=np.float32),
+            requires_grad=requires_grad,
+        )
+
+    @staticmethod
+    def stack(tensors, axis=0):
+        from src.ops.stack import Stack
+        return Stack.forward(tensors, axis)
 
     def __repr__(self):
         return f"Tensor(data={self.data}, requires_grad={self.requires_grad})"
@@ -327,6 +362,100 @@ class Tensor:
         from src.math.clip import Clip
         return Clip.forward(self, min_value, max_value)
 
+    def argmax(self, axis=None):
+        return Tensor(
+            np.argmax(self.data, axis=axis),
+            requires_grad=False,
+        )
+
+    def item(self):
+        return self.data.item()
+
+    def transpose(self, *axes):
+
+        out = Tensor(
+            np.transpose(self.data, axes),
+            requires_grad=self.requires_grad,
+            parents=(self,),
+            op="Transpose",
+        )
+
+        def _backward():
+            if not self.requires_grad:
+                return
+
+            inverse = np.argsort(axes)
+
+            self.grad += np.transpose(
+                out.grad,
+                inverse,
+            )
+
+        out._backward = _backward
+
+        return out
+
+    def permute(self, *dims):
+        return self.transpose(*dims)
+
+    def reshape(self, *shape):
+
+        out = Tensor(
+            self.data.reshape(shape),
+            requires_grad=self.requires_grad,
+            parents=(self,),
+            op="Reshape",
+        )
+
+        def _backward():
+            if self.requires_grad:
+                self.grad += out.grad.reshape(
+                    self.shape
+                )
+
+        out._backward = _backward
+
+        return out
+
+    def squeeze(self, axis=None):
+
+        out = Tensor(
+            np.squeeze(self.data, axis),
+            requires_grad=self.requires_grad,
+            parents=(self,),
+            op="Squeeze",
+        )
+
+        def _backward():
+            if self.requires_grad:
+                self.grad += out.grad.reshape(
+                    self.shape
+                )
+
+        out._backward = _backward
+
+        return out
+
+    def unsqueeze(self, axis):
+
+        out = Tensor(
+            np.expand_dims(self.data, axis),
+            requires_grad=self.requires_grad,
+            parents=(self,),
+            op="Unsqueeze",
+        )
+
+        def _backward():
+            if self.requires_grad:
+                self.grad += np.squeeze(
+                    out.grad,
+                    axis=axis,
+                )
+
+        out._backward = _backward
+
+        return out
+    
     def backward(self):
         # impl DAG topo
         topo = []
