@@ -53,7 +53,7 @@ class Tensor:
         )
 
     def __repr__(self):
-        return f"Tensor(data={self.data}, grad={self.grad}, requires_grad={self.requires_grad})"
+        return f"Tensor(data={self.data}, requires_grad={self.requires_grad})"
 
     def __add__(self, other):
         if not isinstance(other, Tensor):
@@ -280,6 +280,58 @@ class Tensor:
 
     def __rsub__(self, other):
         return Tensor(other) - self
+
+    def relu(self):
+        out = Tensor(
+            np.maximum(0, self.data),
+            requires_grad=self.requires_grad,
+            parents=(self,),
+            op="ReLU",
+        )
+
+        def _backward():
+            if self.requires_grad:
+                self.grad += out.grad * (self.data > 0)
+
+        out._backward = _backward
+
+        return out
+
+    def sigmoid(self):
+        sig = 1.0 / (1.0 + np.exp(-self.data))
+
+        out = Tensor(
+            sig,
+            requires_grad=self.requires_grad,
+            parents=(self,),
+            op="Sigmoid",
+        )
+
+        def _backward():
+            if self.requires_grad:
+                self.grad += out.grad * sig * (1 - sig)
+
+        out._backward = _backward
+
+        return out
+
+    def tanh(self):
+        t = np.tanh(self.data)
+
+        out = Tensor(
+            t,
+            requires_grad=self.requires_grad,
+            parents=(self,),
+            op="Tanh",
+        )
+
+        def _backward():
+            if self.requires_grad:
+                self.grad += out.grad * (1 - t * t)
+
+        out._backward = _backward
+
+        return out
 
     def backward(self):
         # impl DAG topo
