@@ -2,6 +2,7 @@ from .MSE import MSE
 from .CategoricalCrossEntropy import CategoricalCrossEntropy
 from .bce import BinaryCrossEntropy
 from .mae import MAE
+from .CrossEntropyLoss import CrossEntropyLoss
 
 losses = {
     "mse": MSE(),
@@ -9,4 +10,5 @@ losses = {
     "mean_absolute_error": MAE(),
     "categorical_crossentropy": CategoricalCrossEntropy(),
     "binary_crossentropy": BinaryCrossEntropy(),
+    "cross_entropy": CrossEntropyLoss()
 }
