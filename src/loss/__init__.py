@@ -1,3 +1,4 @@
+from .CrossEntropyWithLogitsLoss import CrossEntropyWithLogitsLoss
 from .MSE import MSE
 from .CategoricalCrossEntropy import CategoricalCrossEntropy
 from .SparseCategoricalCrossEntropy import SparseCategoricalCrossEntropy
@@ -12,5 +13,6 @@ losses = {
     "categorical_crossentropy": CategoricalCrossEntropy(),
     "binary_crossentropy": BinaryCrossEntropy(),
     "cross_entropy": CrossEntropyLoss(),
-    "sparse_categorical_crossentropy": SparseCategoricalCrossEntropy()
+    "sparse_categorical_crossentropy": SparseCategoricalCrossEntropy(),
+    "cross_entropy_with_logits": CrossEntropyWithLogitsLoss()
 }
