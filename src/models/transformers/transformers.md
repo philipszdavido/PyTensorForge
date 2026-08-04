@@ -1,0 +1,33 @@
+```
+                Input
+                  │
+                  ▼
+        MultiHeadAttention
+                  │
+                  ▼
+             Dropout
+                  │
+                  ▼
+              Add(Input)
+                  │
+                  ▼
+             LayerNorm
+                  │
+                  ▼
+            Linear(4*d)
+                  │
+                  ▼
+                 GELU
+                  │
+                  ▼
+             Linear(d)
+                  │
+                  ▼
+             Dropout
+                  │
+                  ▼
+                 Add
+                  │
+                  ▼
+             LayerNorm
+```
