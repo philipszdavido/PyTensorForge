@@ -1,6 +1,7 @@
 from .GlorotUniform import GlorotUniform
 from .HeUniform import HeUniform
 from .LecunUniform import LecunUniform
+from .Ones import Ones
 from .Orthogonal import Orthogonal
 from .RandomNormal import RandomNormal
 from .Zeros import Zeros
@@ -12,4 +13,5 @@ initializer_fns = {
     "zeros": Zeros(),
     "orthogonal": Orthogonal(),
     "random_normal": RandomNormal(),
+    "ones": Ones(),
 }
