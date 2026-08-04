@@ -1,7 +1,3 @@
-import math
-
-import numpy as np
-
 from src.core.Tensor import Tensor
 from src.neural.Layer import Layer
 
@@ -118,20 +114,6 @@ class MultiHeadAttention(Layer):
         output = context @ self.Wo
 
         return output
-
-    # def call(
-    #         self,
-    #         query,
-    #         key=None,
-    #         value=None,
-    #         mask=None,
-    # ):
-    #     if key is None:
-    #         key = query
-    #
-    #     if value is None:
-    #         value = key
-    #
 
     def state_dict(self):
         return {
