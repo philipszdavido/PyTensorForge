@@ -1,5 +1,8 @@
 import math
 
+import numpy as np
+
+from src.core.Tensor import Tensor
 from src.neural.Layer import Layer
 
 
@@ -90,7 +93,12 @@ class MultiHeadAttention(Layer):
 
         scores = Q @ K.transpose(0, 1, 3, 2)
 
-        scores = scores / math.sqrt(self.head_dim)
+        # scores = scores / math.sqrt(self.head_dim)
+        scores = scores / Tensor(self.head_dim).sqrt()
+        # mask = np.triu(
+        #     np.ones((seq, seq)),
+        #     k=1
+        # ).astype(bool)
 
         if mask is not None:
             scores = scores.masked_fill(mask == 0, -1e9)
