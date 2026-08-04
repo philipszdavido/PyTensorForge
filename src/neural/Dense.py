@@ -1,7 +1,4 @@
-import numpy as np
-
 from src.neural.Layer import Layer
-from src.initializers import initializer_fns
 from src.activations import activation_fns
 
 
@@ -48,3 +45,14 @@ class Dense(Layer):
             output = activation_fns[self.activation](output)
 
         return output
+
+    def compute_output_shape(self, input_shape):
+        return input_shape[:-1] + (self.units,)
+
+    def get_config(self):
+        return {
+            "units": self.units,
+            "activation": self.activation,
+            "kernel_initializer": self.kernel_initializer,
+            "bias_initializer": self.bias_initializer,
+        }

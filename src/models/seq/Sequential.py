@@ -1,10 +1,8 @@
 import numpy as np
 from src.loss import losses
 from src.optimizers import optimizers
-import json
-import pickle
-
-from src.serialization.modelio import ModelIO
+from src.serialization.checkpoint import Checkpoint
+from src.serialization.modelio import ModelIO, flatten, unflatten
 
 
 class Sequential:
@@ -40,12 +38,15 @@ class Sequential:
         X,
         y,
         epochs=5,
+        initial_epoch=0,
         batch_size=32,
         verbose=1,
+        checkpoint_path=None,
+        checkpoint_every=1,
     ):
         n = len(X)
 
-        for epoch in range(epochs):
+        for epoch in range(initial_epoch, epochs):
 
             epoch_loss = 0.0
 
@@ -71,6 +72,16 @@ class Sequential:
 
             if verbose:
                 print(f"Epoch {epoch + 1}/{epochs} loss={epoch_loss:.4f}")
+
+            if checkpoint_path is not None:
+                if (epoch + 1) % checkpoint_every == 0:
+                    Checkpoint.save(
+                        model=self,
+                        optimizer=self.optimizer,
+                        epoch=epoch + 1,
+                        loss=epoch_loss,
+                        path=checkpoint_path,
+                    )
 
     def parameters(self):
         params = []
@@ -191,8 +202,92 @@ class Sequential:
                 state[f"layer_{i}"]
             )
 
-    def save(self, path):
-        ModelIO.save(self, path)
+    def save(self, path, metadata = None):
+        ModelIO.save(self, path, metadata)
+
+    def load_model(self, path, input_shape=None):
+
+        if not self.built:
+
+            if input_shape is None:
+                raise RuntimeError(
+                    "Model must be built before loading."
+                )
+
+            self.build(input_shape)
+
+        return ModelIO.load(self, path)
 
     def load(self, path):
-        ModelIO.load(self, path)
+        return ModelIO.load(self, path)
+
+    def save_metadata(self, path, metadata):
+        ModelIO.save_data(metadata, path)
+
+    def load_metadata(self, path):
+        return ModelIO.load(path)
+
+    def save_checkpoint(
+            self,
+            path,
+            optimizer,
+            epoch,
+            loss,
+            metadata=None,
+    ):
+
+        checkpoint = {
+            "model": self.state_dict(),
+            "optimizer": optimizer.state_dict(),
+            "epoch": epoch,
+            "loss": loss,
+            "metadata": metadata or {},
+        }
+
+        np.savez_compressed(
+            path,
+            **flatten(checkpoint)
+        )
+
+    def load_checkpoint(
+            self,
+            path,
+            optimizer=None,
+    ):
+
+        data = np.load(path, allow_pickle=True)
+
+        flat = {
+            k: data[k]
+            for k in data.files
+        }
+
+        checkpoint = unflatten(flat)
+
+        self.load_state_dict(
+            checkpoint["model"]
+        )
+
+        if optimizer is not None:
+            optimizer.load_state_dict(
+                checkpoint["optimizer"]
+            )
+
+        return {
+            "epoch": int(checkpoint["epoch"]),
+            "loss": float(checkpoint["loss"]),
+            "metadata": checkpoint.get("metadata", {}),
+        }
+
+    def build(self, input_shape):
+
+        shape = input_shape
+
+        for layer in self.layers:
+            layer.build(shape)
+            layer.built = True
+
+            # propagate output shape
+            shape = layer.compute_output_shape(shape)
+
+        self.built = True

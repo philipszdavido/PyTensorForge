@@ -1,42 +1,132 @@
+# import numpy as np
+#
+#
+# def flatten(state):
+#     out = {}
+#
+#     for layer_name, params in state.items():
+#
+#         for param_name, value in params.items():
+#             out[f"{layer_name}.{param_name}"] = value
+#
+#     return out
+#
+# class ModelIO:
+#
+#     @staticmethod
+#     def save(model, path, metadata = None):
+#
+#         np.savez_compressed(
+#             path,
+#             **flatten(model.state_dict())
+#         )
+#
+#     @staticmethod
+#     def save_data(data, path):
+#
+#         np.savez_compressed(
+#             path,
+#             **flatten(data)
+#         )
+#
+#     @staticmethod
+#     def load(model, path):
+#
+#         data = np.load(path)
+#
+#         state = {}
+#
+#         for key in data.files:
+#
+#             layer, param = key.split(".")
+#
+#             if layer not in state:
+#                 state[layer] = {}
+#
+#             state[layer][param] = data[key]
+#
+#         model.load_state_dict(state)
+#
+#         return model
+
 import numpy as np
 
 
-def flatten(state):
+def flatten(d, prefix=""):
     out = {}
 
-    for layer_name, params in state.items():
+    for k, v in d.items():
 
-        for param_name, value in params.items():
-            out[f"{layer_name}.{param_name}"] = value
+        key = f"{prefix}.{k}" if prefix else k
+
+        if isinstance(v, dict):
+            out.update(flatten(v, key))
+        else:
+            out[key] = v
 
     return out
+
+
+def unflatten(flat):
+    out = {}
+
+    for key, value in flat.items():
+
+        parts = key.split(".")
+
+        d = out
+
+        for p in parts[:-1]:
+            d = d.setdefault(p, {})
+
+        d[parts[-1]] = value
+
+    return out
+
 
 class ModelIO:
 
     @staticmethod
-    def save(model, path):
+    def save(model, path, metadata=None):
+
+        state = {
+            "model": model.state_dict()
+        }
+
+        if metadata is not None:
+            state["metadata"] = metadata
 
         np.savez_compressed(
             path,
-            **flatten(model.state_dict())
+            **flatten(state)
         )
 
     @staticmethod
     def load(model, path):
 
-        data = np.load(path)
+        data = np.load(path, allow_pickle=True)
 
-        state = {}
+        flat = {
+            k: data[k]
+            for k in data.files
+        }
 
-        for key in data.files:
+        state = unflatten(flat)
 
-            layer, param = key.split(".")
+        model.load_state_dict(state["model"])
 
-            if layer not in state:
-                state[layer] = {}
+        return state.get("metadata", None)
 
-            state[layer][param] = data[key]
+    @staticmethod
+    def read(path):
 
-        model.load_state_dict(state)
+        data = np.load(path, allow_pickle=True)
 
-        return model
+        flat = {
+            k: data[k]
+            for k in data.files
+        }
+
+        state = unflatten(flat)
+
+        return state

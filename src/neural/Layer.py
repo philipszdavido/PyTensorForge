@@ -29,8 +29,8 @@ class Layer:
         trainable=True,
         name=None,
     ):
-        init = initializer_fns[initializer]
-        value = init(shape)
+
+        value = initializer_fns[initializer](shape)
 
         parameter = Parameter(
             data=value,
@@ -64,3 +64,6 @@ class Layer:
 
             if p.name in state:
                 p.data[:] = state[p.name]
+
+    def compute_output_shape(self, input_shape):
+        raise NotImplementedError

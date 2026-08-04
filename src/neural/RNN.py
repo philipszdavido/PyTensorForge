@@ -25,18 +25,21 @@ class RNN(Layer):
         self.Wx = self.add_weight(
             shape=(input_size, self.hidden_size),
             initializer="glorot_uniform",
+            trainable=True,
             name="Wx",
         )
 
         self.Wh = self.add_weight(
             shape=(self.hidden_size, self.hidden_size),
             initializer="orthogonal",
+            trainable=True,
             name="Wh",
         )
 
         self.bh = self.add_weight(
             shape=(self.hidden_size,),
             initializer="zeros",
+            trainable=True,
             name="bh",
         )
 
@@ -69,3 +72,12 @@ class RNN(Layer):
             return Tensor.stack(outputs, axis=1)
 
         return h
+
+    def compute_output_shape(self, input_shape):
+
+        batch = input_shape[0]
+
+        return (
+            batch,
+            self.hidden_size,
+        )

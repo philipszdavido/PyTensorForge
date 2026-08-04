@@ -54,3 +54,12 @@ class Embedding(Layer):
         out._backward = _backward
 
         return out
+
+    def compute_output_shape(self, input_shape):
+        batch, seq = input_shape
+
+        return (
+            batch,
+            seq,
+            self.embedding_dim,
+        )

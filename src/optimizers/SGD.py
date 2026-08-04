@@ -20,3 +20,11 @@ class SGDescent:
     def zero_grad(self, params):
         for p in params:
             p.zero_grad()
+
+    def state_dict(self):
+        return {
+            "lr": self.lr
+        }
+
+    def load_state_dict(self, state):
+        self.lr = float(state["lr"])
