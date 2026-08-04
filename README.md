@@ -30,11 +30,11 @@ PyTensorForge is a lightweight Python machine learning framework designed for le
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/<your-username>/PyTensorForge.git
+   git clone https://github.com/philipsz-davido/PyTensorForge.git
    cd PyTensorForge
    ```
 
-2. Install dependencies (if any):
+2. Install dependencies:
 
    ```bash
    pip install -r requirements.txt
