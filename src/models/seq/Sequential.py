@@ -1,3 +1,5 @@
+import string
+
 import numpy as np
 from src.loss import losses
 from src.optimizers import optimizers
@@ -20,6 +22,7 @@ class Sequential:
     def __call__(self, x):
         for layer in self.layers:
             x = layer(x)
+            # print(layer.__class__.__name__, x.shape)
 
         return x
 
@@ -30,7 +33,12 @@ class Sequential:
         metrics=None,
     ):
         self.loss = losses[loss]
-        self.optimizer = optimizers[optimizer]
+
+        if optimizer is not string:
+            self.optimizer = optimizer
+        else:
+            self.optimizer = optimizers[optimizer]
+
         self.metrics = metrics or []
 
     def fit(
@@ -70,6 +78,12 @@ class Sequential:
 
                 # self.optimizer.zero_grad(self.parameters())
 
+            if epoch % 20 == 0:
+                print(np.linalg.norm(self.layers[1].attn.Wq.grad))
+                print(np.linalg.norm(self.layers[1].attn.Wk.grad))
+                print(np.linalg.norm(self.layers[1].attn.Wv.grad))
+                print(np.linalg.norm(self.layers[1].attn.Wo.grad))
+
             if verbose:
                 print(f"Epoch {epoch + 1}/{epochs} loss={epoch_loss:.4f}")
 
@@ -90,21 +104,6 @@ class Sequential:
             params.extend(layer.parameters())
 
         return params
-
-    def summary_(self):
-        print("Sequential")
-        print("-------------------------")
-
-        total = 0
-
-        for layer in self.layers:
-            print(layer)
-
-            for p in layer.parameters():
-                total += np.prod(p.shape)
-
-        print("-------------------------")
-        print("Total params:", total)
 
     def summary(self):
 
@@ -199,7 +198,7 @@ class Sequential:
 
         for i, layer in enumerate(self.layers):
             layer.load_state_dict(
-                state[f"layer_{i}"]
+                state.get(f"layer_{i}", {})
             )
 
     def save(self, path, metadata = None):
@@ -287,7 +286,6 @@ class Sequential:
             layer.build(shape)
             layer.built = True
 
-            # propagate output shape
             shape = layer.compute_output_shape(shape)
 
         self.built = True
