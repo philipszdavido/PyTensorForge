@@ -26,12 +26,19 @@ class LayerNorm(Layer):
         return self.gamma * x_hat + self.beta
 
     def call(self, x, mask=None):
+        # mean = x.mean(axis=-1, keepdims=True)
+        #
+        # var = ((x - mean) ** 2).mean(axis=-1, keepdims=True)
+        #
+        # y = self.gamma * (x - mean) / (var + self.eps).sqrt() + self.beta
+        # return y
         mean = x.mean(axis=-1, keepdims=True)
 
         var = ((x - mean) ** 2).mean(axis=-1, keepdims=True)
 
-        y = self.gamma * (x - mean) / (var + self.eps).sqrt() + self.beta
-        return y
+        xhat = (x - mean) / (var + self.eps).sqrt()
+
+        return self.gamma * xhat + self.beta
 
     def build(self, input_shape):
         self.gamma = self.add_weight(
