@@ -60,6 +60,9 @@ class Layer:
 
     def load_state_dict(self, state):
 
+        if not state:
+            return
+
         for p in self.parameters():
 
             if p.name in state:
