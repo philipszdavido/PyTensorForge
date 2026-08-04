@@ -1,5 +1,3 @@
-import string
-
 import numpy as np
 from src.loss import losses
 from src.optimizers import optimizers
@@ -32,12 +30,22 @@ class Sequential:
         optimizer,
         metrics=None,
     ):
-        self.loss = losses[loss]
 
-        if optimizer is not string:
-            self.optimizer = optimizer
+        if isinstance(loss, str):
+            try:
+                self.loss = losses[loss]
+            except KeyError:
+                raise ValueError(f"Unknown loss '{loss}'")
         else:
-            self.optimizer = optimizers[optimizer]
+            self.loss = loss
+
+        if isinstance(optimizer, str):
+            try:
+                self.optimizer = optimizers[optimizer]
+            except KeyError:
+                raise ValueError(f"Unknown optimizer '{optimizer}'")
+        else:
+            self.optimizer = optimizer
 
         self.metrics = metrics or []
 
@@ -76,15 +84,13 @@ class Sequential:
 
                 self.optimizer.step(self.parameters())
 
-                # self.optimizer.zero_grad(self.parameters())
-
-            if epoch % 20 == 0:
-                print(np.linalg.norm(self.layers[1].attn.Wq.grad))
-                print(np.linalg.norm(self.layers[1].attn.Wk.grad))
-                print(np.linalg.norm(self.layers[1].attn.Wv.grad))
-                print(np.linalg.norm(self.layers[1].attn.Wo.grad))
-
             if verbose:
+                # if epoch % 20 == 0 and self.layers[1].__class__.__name__:
+                #     print(np.linalg.norm(self.layers[1].attn.Wq.grad))
+                #     print(np.linalg.norm(self.layers[1].attn.Wk.grad))
+                #     print(np.linalg.norm(self.layers[1].attn.Wv.grad))
+                #     print(np.linalg.norm(self.layers[1].attn.Wo.grad))
+
                 print(f"Epoch {epoch + 1}/{epochs} loss={epoch_loss:.4f}")
 
             if checkpoint_path is not None:
