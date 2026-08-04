@@ -21,12 +21,12 @@ class TransformerBlock(Layer):
 
     def call(self, x):
         h = self.attn(x)
-        # x = self.norm1(x + self.dropout(h))
-        x = self.norm1(x + h)
+        x = self.norm1(x + self.dropout(h))
+        # x = self.norm1(x + h)
 
         h = self.fc2(activation_fns["gelu"](self.fc1(x)))
-        # x = self.norm2(x + self.dropout(h))
-        x = self.norm2(x + h)
+        x = self.norm2(x + self.dropout(h))
+        # x = self.norm2(x + h)
 
         return x
 
