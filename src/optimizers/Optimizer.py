@@ -6,7 +6,7 @@ class Optimizer:
 
     def zero_out(self):
         for p in self.grads:
-            p.zeros()
+            p.zeros(p.shape)
 
     def step(self):
         raise NotImplementedError
