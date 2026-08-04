@@ -1,4 +1,5 @@
 from .ELU import ELU
+from .GELU import GELU
 from .ReLU import ReLU
 from .SELU import SELU
 from .Sigmoid import Sigmoid
@@ -12,4 +13,5 @@ activation_fns = {
     "elu": ELU(),
     "selu": SELU(),
     "softmax": Softmax(),
+    "gelu": GELU(),
 }
