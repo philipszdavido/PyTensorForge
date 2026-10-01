@@ -1,0 +1,13 @@
+{
+  "name": "pytensorforge-chat",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p . && cp static/index.html static/styles.css dist/",
+    "test": "node test/markdown.test.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "jsdom": "^24.0.0"
+  }
+}

@@ -1,0 +1,223 @@
+{
+  "architecture": "gpt",
+  "format_version": 1,
+  "model": {
+    "activation": "gelu",
+    "architecture": "gpt",
+    "context_length": 256,
+    "d_model": 256,
+    "dropout": 0.0,
+    "ff_dim": 1024,
+    "n_heads": 4,
+    "n_layers": 4,
+    "norm_eps": 1e-05,
+    "position_encoding": "learned",
+    "rope_theta": 10000.0,
+    "tie_weights": true,
+    "vocab_size": 12713
+  },
+  "source": {
+    "framework_version": "0.3.0-phase5",
+    "optimizer_steps": 6500,
+    "run_id": "20260928-225121-011115",
+    "tokens_processed": 52937984
+  },
+  "tokenizer": {
+    "file": "tokenizer/tokenizer.json",
+    "identity": {
+      "fingerprint": "b7f65ab872c5abdb",
+      "format_version": 1,
+      "type": "bytebpe",
+      "vocab_size": 12713
+    }
+  },
+  "weights": {
+    "dtype": "float32",
+    "file": "weights/model.npz",
+    "sha256": "35a6616537baca4378c5e9666b45ecfc603e05fbd764e7d2efea41e2c826b834",
+    "tensors": {
+      "blocks.0.attn.Wk": [
+        256,
+        256
+      ],
+      "blocks.0.attn.Wo": [
+        256,
+        256
+      ],
+      "blocks.0.attn.Wq": [
+        256,
+        256
+      ],
+      "blocks.0.attn.Wv": [
+        256,
+        256
+      ],
+      "blocks.0.fc1.bias": [
+        1024
+      ],
+      "blocks.0.fc1.kernel": [
+        256,
+        1024
+      ],
+      "blocks.0.fc2.bias": [
+        256
+      ],
+      "blocks.0.fc2.kernel": [
+        1024,
+        256
+      ],
+      "blocks.0.norm1.beta": [
+        256
+      ],
+      "blocks.0.norm1.gamma": [
+        256
+      ],
+      "blocks.0.norm2.beta": [
+        256
+      ],
+      "blocks.0.norm2.gamma": [
+        256
+      ],
+      "blocks.1.attn.Wk": [
+        256,
+        256
+      ],
+      "blocks.1.attn.Wo": [
+        256,
+        256
+      ],
+      "blocks.1.attn.Wq": [
+        256,
+        256
+      ],
+      "blocks.1.attn.Wv": [
+        256,
+        256
+      ],
+      "blocks.1.fc1.bias": [
+        1024
+      ],
+      "blocks.1.fc1.kernel": [
+        256,
+        1024
+      ],
+      "blocks.1.fc2.bias": [
+        256
+      ],
+      "blocks.1.fc2.kernel": [
+        1024,
+        256
+      ],
+      "blocks.1.norm1.beta": [
+        256
+      ],
+      "blocks.1.norm1.gamma": [
+        256
+      ],
+      "blocks.1.norm2.beta": [
+        256
+      ],
+      "blocks.1.norm2.gamma": [
+        256
+      ],
+      "blocks.2.attn.Wk": [
+        256,
+        256
+      ],
+      "blocks.2.attn.Wo": [
+        256,
+        256
+      ],
+      "blocks.2.attn.Wq": [
+        256,
+        256
+      ],
+      "blocks.2.attn.Wv": [
+        256,
+        256
+      ],
+      "blocks.2.fc1.bias": [
+        1024
+      ],
+      "blocks.2.fc1.kernel": [
+        256,
+        1024
+      ],
+      "blocks.2.fc2.bias": [
+        256
+      ],
+      "blocks.2.fc2.kernel": [
+        1024,
+        256
+      ],
+      "blocks.2.norm1.beta": [
+        256
+      ],
+      "blocks.2.norm1.gamma": [
+        256
+      ],
+      "blocks.2.norm2.beta": [
+        256
+      ],
+      "blocks.2.norm2.gamma": [
+        256
+      ],
+      "blocks.3.attn.Wk": [
+        256,
+        256
+      ],
+      "blocks.3.attn.Wo": [
+        256,
+        256
+      ],
+      "blocks.3.attn.Wq": [
+        256,
+        256
+      ],
+      "blocks.3.attn.Wv": [
+        256,
+        256
+      ],
+      "blocks.3.fc1.bias": [
+        1024
+      ],
+      "blocks.3.fc1.kernel": [
+        256,
+        1024
+      ],
+      "blocks.3.fc2.bias": [
+        256
+      ],
+      "blocks.3.fc2.kernel": [
+        1024,
+        256
+      ],
+      "blocks.3.norm1.beta": [
+        256
+      ],
+      "blocks.3.norm1.gamma": [
+        256
+      ],
+      "blocks.3.norm2.beta": [
+        256
+      ],
+      "blocks.3.norm2.gamma": [
+        256
+      ],
+      "final_norm.beta": [
+        256
+      ],
+      "final_norm.gamma": [
+        256
+      ],
+      "pos_emb.embedding": [
+        256,
+        256
+      ],
+      "token_emb.embedding": [
+        12713,
+        256
+      ]
+    }
+  }
+}

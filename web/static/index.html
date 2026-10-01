@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PyTensorForge Chat</title>
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <button id="new-chat" type="button" class="primary">New chat</button>
+      <ul id="conversations" class="conversations" aria-label="Conversations"></ul>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <label class="model-picker">Model <select id="model" aria-label="Model"></select></label>
+        <span id="conn-status" class="conn conn-pending">connecting…</span>
+        <button id="settings-btn" type="button">Settings</button>
+      </header>
+      <div id="banner" class="banner" role="status" hidden></div>
+      <section id="messages" class="messages" aria-live="polite"></section>
+      <footer class="composer">
+        <div id="status-line" class="status-line" aria-live="polite"></div>
+        <div class="composer-row">
+          <textarea id="input" rows="1" placeholder="Send a message (Enter to send, Shift+Enter for a newline)" aria-label="Message"></textarea>
+          <button id="send" type="button" class="primary">Send</button>
+          <button id="stop" type="button" class="danger" hidden>Stop</button>
+        </div>
+      </footer>
+    </main>
+  </div>
+  <dialog id="settings" aria-label="Settings">
+    <h2>Settings</h2>
+    <label>Server URL <input id="set-base-url" type="url" placeholder="same origin"></label>
+    <label>API key <input id="set-api-key" type="password" autocomplete="off"></label>
+    <label class="check"><input id="set-remember" type="checkbox"> Remember key on this device</label>
+    <label>Temperature <input id="set-temperature" type="number" min="0" max="2" step="0.1"></label>
+    <label>Max tokens <input id="set-max-tokens" type="number" min="1" step="1"></label>
+    <label>System prompt <textarea id="set-system" rows="3"></textarea></label>
+    <div class="dialog-actions">
+      <button id="settings-cancel" type="button">Cancel</button>
+      <button id="settings-save" type="button" class="primary">Save</button>
+    </div>
+  </dialog>
+</body>
+</html>

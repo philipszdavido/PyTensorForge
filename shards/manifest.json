@@ -1,0 +1,27 @@
+{
+  "format_version": 1,
+  "tokenizer_identity": {
+    "type": "bytebpe",
+    "format_version": 1,
+    "vocab_size": 12713,
+    "fingerprint": "b7f65ab872c5abdb"
+  },
+  "vocab_size": 12713,
+  "dtype": "uint16",
+  "insert_eos": true,
+  "corpus_version": "ee77bbac8521b5e9dd9956b7916b7836d6f7a02fa6c1023b590c46b128929040",
+  "source_files": [
+    "/Users/chidumennamdi/Documents/developerse/PyTensorForge/shakespeare.txt"
+  ],
+  "total_tokens": 306649,
+  "shards": [
+    {
+      "file": "shard-w000-00000.bin",
+      "token_count": 306649,
+      "dtype": "uint16",
+      "checksum": "da2beb5de493c50ef917120eb53bf2f93e17c0ac35893905af6c5e5662592527"
+    }
+  ],
+  "created_at": 1790633353.7275908,
+  "build_seconds": 0.1972489356994629
+}

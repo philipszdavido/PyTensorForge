@@ -1,0 +1,128 @@
+{
+  "run_id": "20260928-225121-011115",
+  "start_time": 1790632281.649503,
+  "config": {
+    "model": {
+      "vocab_size": 32000,
+      "context_length": 256,
+      "d_model": 256,
+      "n_layers": 4,
+      "n_heads": 4,
+      "ff_dim": 1024,
+      "activation": "gelu",
+      "dropout": 0.0,
+      "norm_eps": 1e-05,
+      "tie_weights": true
+    },
+    "data": {
+      "train": [
+        "shakespeare.txt"
+      ],
+      "validation": null,
+      "tokenizer": "tokenizer.json",
+      "sequence_length": 256,
+      "read_buffer_size": 1048576,
+      "insert_eos": true,
+      "text_field": "text",
+      "workers": 1,
+      "prefetch": 4,
+      "shuffle_files": false,
+      "val_split_fraction": 0.01
+    },
+    "training": {
+      "max_tokens": null,
+      "max_epochs": null,
+      "total_steps": 20000,
+      "micro_batch_size": 8,
+      "gradient_accumulation_steps": 4,
+      "learning_rate": 0.0003,
+      "weight_decay": 0.01,
+      "warmup_steps": 500,
+      "decay": "cosine",
+      "min_lr": 0.0,
+      "gradient_clip": 1.0,
+      "precision": "fp32",
+      "seed": 1337
+    },
+    "checkpoint": {
+      "directory": "checkpoints",
+      "interval_steps": 500,
+      "keep_last": 3,
+      "keep_every": null
+    },
+    "evaluation": {
+      "interval_steps": 500,
+      "interval_tokens": null,
+      "max_batches": 50
+    },
+    "runtime": {
+      "device": "cpu",
+      "seed": 1337
+    }
+  },
+  "tokenizer": {
+    "type": "bytebpe",
+    "format_version": 1,
+    "vocab_size": 12713,
+    "fingerprint": "b7f65ab872c5abdb"
+  },
+  "dataset": {
+    "train_files": 1,
+    "sequence_length": 256
+  },
+  "hardware": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "processor": "arm",
+    "cpu_count": 12,
+    "python": "3.12.10",
+    "numpy": "2.5.1",
+    "device": "cpu"
+  },
+  "seed": 1337,
+  "resumes": [
+    {
+      "time": 1790679826.7643788,
+      "hardware": {
+        "platform": "macOS-26.6.2-arm64-arm-64bit",
+        "processor": "arm",
+        "cpu_count": 12,
+        "python": "3.12.10",
+        "numpy": "2.5.1",
+        "device": "cpu"
+      }
+    }
+  ],
+  "final_metrics": {
+    "optimizer_steps": 12986,
+    "tokens_processed": 105761280,
+    "epoch": 346,
+    "last_loss": 0.009197071893140674,
+    "last_eval": null,
+    "profile": {
+      "backward": {
+        "seconds": 23467.415431075962,
+        "share": 0.6198264320087066
+      },
+      "checkpoint": {
+        "seconds": 5.197775042950525,
+        "share": 0.0001372847542038937
+      },
+      "data_wait": {
+        "seconds": 35.174178311630385,
+        "share": 0.0009290279752266819
+      },
+      "forward": {
+        "seconds": 13574.598243375207,
+        "share": 0.35853521321317233
+      },
+      "host_prep": {
+        "seconds": 19.764037923843716,
+        "share": 0.0005220120274599473
+      },
+      "optimizer": {
+        "seconds": 759.1195851214579,
+        "share": 0.020050030021230583
+      }
+    }
+  }
+}

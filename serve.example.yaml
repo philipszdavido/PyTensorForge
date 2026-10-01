@@ -1,0 +1,54 @@
+host: 0.0.0.0
+port: 8000
+
+models:
+  - name: my-gpt
+    path: exports/my-gpt
+    chat_template: ptf-chat
+    max_batch_size: 8
+    kv_cache_budget_mb: 512
+    prefill_chunk: 256
+    preload: true
+    max_context_tokens: 1024
+    max_generation_tokens: 512
+
+limits:
+  max_concurrent_requests: 32
+  max_body_bytes: 1048576
+  max_messages: 256
+  max_prompt_chars: 200000
+  max_generation_tokens: 1024
+  request_timeout_s: 300
+  max_connections: 512
+  header_timeout_s: 10
+  body_timeout_s: 30
+  keepalive_timeout_s: 30
+  sse_keepalive_s: 15
+  shutdown_drain_s: 30
+
+security:
+  api_keys_file: /etc/ptf/api_keys.txt
+  admin_keys_file: /etc/ptf/admin_keys.txt
+  api_keys_env: PTF_API_KEYS
+  allow_unauthenticated: false
+  metrics_require_auth: true
+  cors_origins:
+    - https://chat.example.com
+  trust_forwarded_for: false
+  rate_limit:
+    requests_per_minute: 120
+    burst: 30
+    max_concurrent_per_principal: 8
+
+runtime:
+  device: auto
+  memory_limit_mb: 4096
+  fallback_chat_template: plain
+  chat_truncation: auto
+
+logging:
+  access_log: logs/access.jsonl
+  log_prompts: false
+
+ui:
+  enabled: true

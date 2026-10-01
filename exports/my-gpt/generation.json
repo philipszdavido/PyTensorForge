@@ -1,0 +1,12 @@
+{
+  "do_sample": true,
+  "max_new_tokens": 128,
+  "repetition_penalty": 1.0,
+  "seed": null,
+  "stop_on_eos": true,
+  "stop_strings": [],
+  "stop_token_ids": [],
+  "temperature": 0.8,
+  "top_k": 40,
+  "top_p": 0.95
+}
