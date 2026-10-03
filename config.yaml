@@ -1,0 +1,27 @@
+model:
+  vocab_size: 32000
+  context_length: 256
+  d_model: 256
+  n_layers: 4
+  n_heads: 4          # d_model must be divisible by n_heads
+  ff_dim: 1024
+data:
+  train: [shakespeare.txt]
+  tokenizer: tokenizer.json
+  sequence_length: 256   # keep equal to context_length
+  prefetch: 4
+  val_split_fraction: 0.01   # optional, holds out ~1% of files for validation
+training:
+  total_steps: 20000     # or max_tokens / max_epochs
+  micro_batch_size: 8
+  gradient_accumulation_steps: 4
+  learning_rate: 0.0003
+  warmup_steps: 500
+  decay: cosine
+checkpoint:
+  directory: checkpoints
+  interval_steps: 500
+  keep_last: 3
+evaluation:
+  interval_steps: 500
+  max_batches: 50
