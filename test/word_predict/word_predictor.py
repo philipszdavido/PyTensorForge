@@ -6,6 +6,7 @@ from src.models.seq.Sequential import Sequential
 from src.neural.Dense import Dense
 from src.neural.LSTM import LSTM
 from src.neural.RNN import RNN
+from src.serialization.modelio import ModelIO
 
 text = """
 the cat sat on the mat.
@@ -104,19 +105,4 @@ model.fit(
 
 model.summary()
 
-seed = ["the", "cat", "chased"]
-
-for _ in range(len(seed)):
-    x = Tensor(
-        [[word_to_index[w] for w in seed]],
-        requires_grad=False,
-    )
-
-    prediction = model.predict(x)
-
-    next_index = prediction.argmax().item()
-    next_word = index_to_word[next_index]
-    seed.append(next_word)
-
-print("Input :", " ".join(seed))
-#print("Next  :", index_to_word[next_index])
+model.save("predict.ptf")
