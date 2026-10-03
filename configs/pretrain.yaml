@@ -1,0 +1,30 @@
+# Stage 1: learn language from plain text. Start small and measure speed first.
+model:
+  vocab_size: 8192            # taken from the tokenizer at start-up
+  context_length: 256
+  d_model: 256
+  n_layers: 6
+  n_heads: 8                  # d_model must divide evenly by n_heads
+  ff_dim: 1024
+  position_encoding: rope     # needed if you ever want to extend the context later
+data:
+  train: [data/pretrain]      # folder of .txt / .jsonl ({"text": ...}) files
+  val_split_fraction: 0.01    # needs many files; otherwise use data.validation
+  tokenizer: tokenizer.json
+  sequence_length: 256        # keep equal to context_length
+  prefetch: 4
+training:
+  total_steps: 20000
+  micro_batch_size: 8
+  gradient_accumulation_steps: 4
+  learning_rate: 0.0006
+  warmup_steps: 500
+  decay: cosine
+  activation_checkpointing: false
+checkpoint:
+  directory: checkpoints
+  interval_steps: 500
+  keep_last: 3
+evaluation:
+  interval_steps: 500
+  max_batches: 50

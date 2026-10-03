@@ -1,0 +1,51 @@
+# Production server config. The port is set by start.sh from $PORT.
+host: 0.0.0.0
+port: 8000
+
+models:
+  - name: my-gpt            # uses the chat template saved inside the exported model
+    path: /data/model          # filled by scripts/fetch_model.py (MODEL_URL)
+    max_batch_size: 2
+    kv_cache_budget_mb: 256
+    prefill_chunk: 256
+    preload: true
+    max_context_tokens: 512    # cannot exceed the model's trained context
+    max_generation_tokens: 256
+
+limits:
+  max_concurrent_requests: 8
+  max_body_bytes: 262144
+  max_messages: 64
+  max_prompt_chars: 50000
+  max_generation_tokens: 256
+  request_timeout_s: 300
+  max_connections: 128
+  header_timeout_s: 10
+  body_timeout_s: 30
+  keepalive_timeout_s: 30
+  sse_keepalive_s: 15
+  shutdown_drain_s: 30
+
+security:
+  api_keys_env: PTF_API_KEYS   # set PTF_API_KEYS in the host's dashboard (min 16 chars)
+  allow_unauthenticated: false
+  metrics_require_auth: true
+  cors_origins: []             # add e.g. "https://chat.yourdomain.com" only if a separate site calls the API
+  trust_forwarded_for: false
+  rate_limit:
+    requests_per_minute: 60
+    burst: 20
+    max_concurrent_per_principal: 4
+
+runtime:
+  device: cpu
+  memory_limit_mb: 1536        # keep below your instance's RAM
+  fallback_chat_template: plain
+  chat_truncation: auto
+
+logging:
+  access_log: null             # logs go to the platform's log viewer instead of a file
+  log_prompts: false
+
+ui:
+  enabled: true
