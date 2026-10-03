@@ -4,3 +4,4 @@
 build/
 pytensorforge.egg-info/
 .idea/
+dist/
