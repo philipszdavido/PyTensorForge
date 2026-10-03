@@ -1,24 +1,24 @@
 import numpy as np
+
 from src.core.Tensor import Tensor
+
 
 # y = XW + B
 class Linear:
     def __init__(self, weight_shape, bias_shape):
 
-        self.W = Tensor(weight_shape)
-        self.W.random()
+        self.W = Tensor.random(weight_shape)
 
-        self.b = Tensor(bias_shape)
-        self.b.random()
+        self.b = Tensor.random(bias_shape)
 
-        self.dW = Tensor(weight_shape)
-        self.db = Tensor(bias_shape)
+        self.dW = Tensor.zeros(weight_shape)
+        self.db = Tensor.zeros(bias_shape)
 
         self.X = None
 
     def normalize(self, X):
-        norm = np.linalg.norm(X.data)
-        return X.data if norm == 0 else X.data / norm
+        norm = np.linalg.norm(X)
+        return X if norm == 0 else X / norm
 
     def forward(self, X):
         self.X = X

@@ -28,12 +28,10 @@ class AdamW(SerialOptimizer):
 
         self.t += 1
 
-        for p in params:
+        for pid, p in enumerate(params):
 
             if not p.requires_grad:
                 continue
-
-            pid = id(p)
 
             if pid not in self.m:
                 self.m[pid] = np.zeros_like(p.data)
@@ -63,3 +61,24 @@ class AdamW(SerialOptimizer):
     def zero_grad(self, params):
         for p in params:
             p.zero_grad()
+
+    def state_dict(self):
+        return {
+            "t": self.t,
+            "lr": self.lr,
+            "beta1": self.beta1,
+            "beta2": self.beta2,
+            "eps": self.eps,
+            "weight_decay": self.weight_decay,
+            "m": {k: v.copy() for k, v in self.m.items()},
+            "v": {k: v.copy() for k, v in self.v.items()},
+        }
+
+    def load_state_dict(self, state):
+        self.t = state["t"]
+        self.beta1 = state["beta1"]
+        self.beta2 = state["beta2"]
+        self.eps = state["eps"]
+        self.weight_decay = state["weight_decay"]
+        self.m = {k: v.copy() for k, v in state["m"].items()}
+        self.v = {k: v.copy() for k, v in state["v"].items()}

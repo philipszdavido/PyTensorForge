@@ -16,7 +16,7 @@ class Dropout(Layer):
 
     def call(self, x):
 
-        if not self.training:
+        if not self.training or self.p <= 0:
             return x
 
         keep = 1 - self.p

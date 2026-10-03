@@ -1,4 +1,43 @@
+import threading
+
 import numpy as np
+
+_state = threading.local()
+
+
+def _noop():
+    return None
+
+
+def grad_enabled():
+    return getattr(_state, "grad_enabled", True)
+
+
+def matmul_policy():
+    return getattr(_state, "matmul_policy", None)
+
+
+def set_matmul_policy(fn):
+    previous = matmul_policy()
+    _state.matmul_policy = fn
+    return previous
+
+
+class no_grad:
+
+    def __enter__(self):
+        self._previous = grad_enabled()
+        _state.grad_enabled = False
+        return self
+
+    def __exit__(self, *exc):
+        _state.grad_enabled = self._previous
+        return False
+
+
+def _round_operand(x):
+    policy = matmul_policy()
+    return x if policy is None else policy(x)
 
 # x = Tensor([[1, 2],
 #             [3, 4]], requires_grad=True)
@@ -15,6 +54,29 @@ def unbroadcast(grad, shape):
 
     return grad
 
+def _topological_order(root):
+    order = []
+    visited = {id(root)}
+    stack = [(root, iter(root.parents))]
+
+    while stack:
+        node, children = stack[-1]
+        advanced = False
+
+        for child in children:
+            if id(child) not in visited:
+                visited.add(id(child))
+                stack.append((child, iter(child.parents)))
+                advanced = True
+                break
+
+        if not advanced:
+            stack.pop()
+            order.append(node)
+
+    return order
+
+
 class Tensor:
 
     def __init__(
@@ -26,7 +88,11 @@ class Tensor:
     ):
         self.data = np.asarray(data, dtype=np.float32)
 
-        self.grad = np.zeros_like(self.data)
+        self._grad = None
+
+        if not grad_enabled():
+            requires_grad = False
+            parents = ()
 
         self.requires_grad = requires_grad
 
@@ -34,14 +100,33 @@ class Tensor:
 
         self.op = op
 
-        self._backward = lambda: None
+        self._bw = _noop
+
+    @property
+    def grad(self):
+        if self._grad is None:
+            self._grad = np.zeros_like(self.data)
+        return self._grad
+
+    @grad.setter
+    def grad(self, value):
+        self._grad = value
+
+    @property
+    def _backward(self):
+        return self._bw
+
+    @_backward.setter
+    def _backward(self, fn):
+        self._bw = fn if self.requires_grad else _noop
 
     @property
     def shape(self):
         return self.data.shape
 
     def zero_grad(self):
-        self.grad.fill(0)
+        if self._grad is not None:
+            self._grad.fill(0)
 
     def __len__(self):
         return self.data.shape[0]
@@ -220,20 +305,29 @@ class Tensor:
         if not isinstance(other, Tensor):
             other = Tensor(other)
 
+        policy = matmul_policy()
+        a = self.data if policy is None else policy(self.data)
+        b = other.data if policy is None else policy(other.data)
+        result = a @ b
+
         out = Tensor(
-            self.data @ other.data,
+            result if policy is None else policy(result),
             requires_grad=self.requires_grad or other.requires_grad,
             parents=(self, other),
             op="MatMul",
         )
 
         def _backward():
+            g = out.grad if policy is None else policy(out.grad)
 
             if self.requires_grad:
                 grad = np.matmul(
-                    out.grad,
-                    np.swapaxes(other.data, -1, -2),
+                    g,
+                    np.swapaxes(b, -1, -2),
                 )
+
+                if policy is not None:
+                    grad = policy(grad)
 
                 self.grad += Tensor.unbroadcast(
                     grad,
@@ -242,9 +336,12 @@ class Tensor:
 
             if other.requires_grad:
                 grad = np.matmul(
-                    np.swapaxes(self.data, -1, -2),
-                    out.grad,
+                    np.swapaxes(a, -1, -2),
+                    g,
                 )
+
+                if policy is not None:
+                    grad = policy(grad)
 
                 other.grad += Tensor.unbroadcast(
                     grad,
@@ -369,6 +466,8 @@ class Tensor:
         if isinstance(mask, Tensor):
             mask = mask.data
 
+        mask = np.broadcast_to(mask, self.data.shape)
+
         out_data = self.data.copy()
 
         out_data[mask] = value
@@ -411,16 +510,14 @@ class Tensor:
 
         x = self.data
 
-        c = np.sqrt(2.0 / np.pi)
+        c = 0.7978845608028654
 
-        inner = c * (x + 0.044715 * (x ** 3))
+        x2 = x * x
 
-        tanh_inner = np.tanh(inner)
-
-        out_data = 0.5 * x * (1.0 + tanh_inner)
+        tanh_inner = np.tanh(c * x * (1.0 + 0.044715 * x2))
 
         out = Tensor(
-            out_data,
+            0.5 * x * (1.0 + tanh_inner),
             requires_grad=self.requires_grad,
             parents=(self,),
             op="GELU",
@@ -430,16 +527,9 @@ class Tensor:
             if not self.requires_grad:
                 return
 
-            sech2 = 1.0 - tanh_inner ** 2
+            sech2 = 1.0 - tanh_inner * tanh_inner
 
-            inner_grad = c * (
-                    1.0 + 3.0 * 0.044715 * x ** 2
-            )
-
-            grad = (
-                    0.5 * (1.0 + tanh_inner)
-                    + 0.5 * x * sech2 * inner_grad
-            )
+            grad = 0.5 * (1.0 + tanh_inner) + (0.5 * c) * x * sech2 * (1.0 + (3.0 * 0.044715) * x2)
 
             self.grad += out.grad * grad
 
@@ -739,23 +829,18 @@ class Tensor:
 
         return out
     
-    def backward(self):
-        # impl DAG topo
-        topo = []
-        visited = set()
+    def backward(self, grad=None, release=False):
+        topo = _topological_order(self)
 
-        def build_topo(v):
-            if v not in visited:
-                visited.add(v)
-                for child in v.parents:
-                    build_topo(child)
-                topo.append(v)
+        self.grad = np.ones_like(self.data) if grad is None else np.asarray(grad, dtype=np.float32).copy()
 
-        build_topo(self)
-
-        self.grad = self.grad = np.ones_like(self.data)
         for t in reversed(topo):
-            t._backward()
+            t._bw()
+
+            if release and t.parents:
+                t._bw = _noop
+                t.parents = ()
+                t._grad = None
 
     @classmethod
     def arange(
