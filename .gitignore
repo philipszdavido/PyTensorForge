@@ -5,3 +5,7 @@ build/
 pytensorforge.egg-info/
 .idea/
 dist/
+*.jsonl
+*.ptf
+*.bin
+*.npz
