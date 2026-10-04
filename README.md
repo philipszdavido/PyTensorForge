@@ -1,89 +1,167 @@
 # PyTensorForge
 
-PyTensorForge is a machine learning framework. It provides a modular core for tensor operations, neural network layers, activation functions, optimizers, loss metrics, and model definitions. It is designed to build and train enterprise-level models for computer vision, forecasting, LLM, NLP, etc.
+PyTensorForge is a Python-based deep learning and model experimentation framework focused on neural networks, transformer architectures, and efficient inference workflows. The project combines foundational tensor operations with modern training, tokenization, export, and serving capabilities for research-oriented AI development.
 
-PyTensorForge is also designed for learning, experimentation, and rapid prototyping
+## Overview
 
-## Key Features
+The framework is designed for developers and researchers who want to explore machine learning concepts in a modular environment while also supporting practical LM workloads such as training, checkpointing, tokenization, generation, and deployment of OpenAI-compatible model servers.
 
-- Core tensor and scalar abstractions for numerical computation
-- Layer-based neural network support with dense and sequential model building
-- Common activation functions such as ReLU, Sigmoid, Tanh, ELU, and SELU
-- Standard optimization algorithms with SGD and batch optimization
-- Loss functions including mean squared error, mean absolute error, and binary cross-entropy
-- Weight initialization utilities with Glorot, He, LeCun, and zeros initializers
-- Model implementations for regression and logistic classification
+PyTensorForge includes:
+
+- Core tensor and numerical primitives
+- Neural network layers and parameter management
+- Activation functions and optimizer logic
+- Model training and validation workflows
+- GPT-style transformer implementations
+- Tokenization, dataset preparation, and context extension
+- Inference runtime and HTTP model serving
+
+## Core Capabilities
+
+### Neural Network Foundations
+
+- Tensor, scalar, vector, and matrix abstractions
+- Dense network layers and parameter-driven computation
+- Basic activation functions including ReLU, Sigmoid, Tanh, ELU, and SELU
+- Optimizers such as SGD
+- Loss functions for regression and classification tasks
+
+### Transformer and LLM Workflows
+
+- Decoder-only GPT model architecture
+- Tokenizer training and BPE byte-level tokenization
+- Streaming dataset preparation and sharded corpora
+- Checkpoint-based training and resumption
+- Model export for inference use cases
+- Generation runtime with KV-cache support and context length extension
+- OpenAI-compatible server interface for deployment
+
+### Training and Serving Infrastructure
+
+- CLI tooling for training, evaluation, export, generation, and serving
+- Model inspection and validation utilities
+- Config-driven execution for reproducible setups
+- Support for chat templates and assistant-style supervised finetuning patterns
 
 ## Project Structure
 
-- `src/core/` – Tensor, scalar, matrix, and vector primitives
-- `src/neural/` – Neural layer abstractions, parameters, and dense layers
-- `src/activations/` – Activation function implementations
-- `src/optimizer/` – Optimizer base classes and SGD implementation
-- `src/loss/` – Loss function abstractions and implementations
-- `src/initializers/` – Weight initializer utilities
-- `src/models/` – High-level model APIs for regression, classification, and sequential models
-- `src/scaling/` – Data scaling utilities
-- `src/models/gpt/` – decoder-only GPT Transformer (see `PHASE1_GPT_TRAINING.md`)
-- `src/data/`, `src/training/` – streaming corpora, token shards, resumable trainer (`PHASE1_GPT_TRAINING.md`, `PHASE2_DATA_PIPELINE.md`)
-- `src/tokenization/` – tokenizer abstraction, word-level and byte-level BPE (`TOKENIZER.md`)
-- `src/inference/` – KV-cache inference runtime, continuous batching, chat templates (`PHASE3_INFERENCE.md`)
-- `src/serving/` – OpenAI-compatible HTTP/SSE model server (`PHASE4_SERVING.md`)
-- RoPE, activation checkpointing, bf16/fp16 numerics, parallel tokenization (`PHASE5_TRAINING_EFFICIENCY.md`)
-- Context extension for RoPE models: extrapolate, linear, NTK (`PHASE6_CONTEXT_EXTENSION.md`)
-- Fine-tuning (`init_from`) and chat training with assistant-only loss masking (`PHASE7_FINETUNING.md`)
-- `web/` – TypeScript chat web client (prebuilt in `web/dist`)
-- `predict/` – Prediction utilities and example datasets
-- `test/` – Unit tests and example usage scripts
+- `src/core/` – tensor and numeric primitives
+- `src/neural/` – neural layers and parameters
+- `src/activations/` – activation implementations
+- `src/optimizers/` – optimization routines
+- `src/loss/` – loss functions
+- `src/initializers/` – initialization strategies
+- `src/models/` – model definitions, including transformer and regression code
+- `src/tokenization/` – tokenizer implementations and training utilities
+- `src/data/` – corpus, sharding, streaming, validation, and dataset utilities
+- `src/training/` – training pipeline and checkpoint management
+- `src/inference/` – generation runtime, cache handling, and model execution
+- `src/serving/` – HTTP serving infrastructure and API configuration
+- `src/scaling/` – scaling utilities
+- `configs/` – model and training configuration files
+- `predict/` – prediction utilities and sample data
+- `test/` – project-level examples and validation scripts
+- `web/` – frontend assets for model interaction
+
+## Requirements
+
+- Python 3.10+
+- NumPy
+- PyYAML
 
 ## Installation
 
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/philipsz-davido/PyTensorForge.git
-   cd PyTensorForge
-   ```
-
-2. Install dependencies:
-
-   ```bash
-   pip install -e .
-   ```
-
-   This installs the `pytensorforge` command (`train`, `resume`, `evaluate`, `inspect`,
-   `tokenize`, `prepare-dataset`, `generate`, `export`, `serve`). Runtime dependencies are
-   `numpy` and `pyyaml` only.
-
-## Usage
-
-Import components from the package and build models using the provided modules. Example:
-
-```python
-from src.neural.Dense import Dense
-from src.neural.Layer import Layer
-from src.optimizers.SGD import SGD
-from src.loss.MSE import MSE
-```
-
-Refer to the `test/` directory for example scripts and usage patterns.
-
-Serving a trained model:
+Clone the repository and install it in editable mode:
 
 ```bash
-pytensorforge export checkpoints/latest --output exports/my-gpt --tokenizer tokenizer/ --chat-template ptf-chat
-pytensorforge serve exports/my-gpt --name my-gpt --api-key-file api_keys.txt
+git clone https://github.com/philipszdavido/PyTensorForge.git
+cd PyTensorForge
+pip install -e .
 ```
 
-Then open `http://127.0.0.1:8000/` or point any OpenAI-compatible client at
-`http://127.0.0.1:8000/v1`. See `serve.example.yaml` and `PHASE4_SERVING.md`.
+This installs the `pytensorforge` CLI, which provides commands for training, evaluation, dataset preparation, generation, export, and serving.
 
-## Contribution
+## Quick Start
 
-Contributions are welcome. Please open an issue or submit a pull request for feature requests, bug fixes, or documentation improvements.
+### 1. Train a model
+
+```bash
+pytensorforge train configs/train.yaml
+```
+
+### 2. Resume training from a checkpoint
+
+```bash
+pytensorforge resume latest --config configs/train.yaml
+```
+
+### 3. Evaluate a saved checkpoint
+
+```bash
+pytensorforge evaluate checkpoints/latest --config configs/train.yaml
+```
+
+### 4. Prepare a dataset for training
+
+```bash
+pytensorforge prepare-dataset data/corpus --tokenizer tokenizer.json --output data/shards
+```
+
+### 5. Export a trained model for inference
+
+```bash
+pytensorforge export checkpoints/latest --output exports/my-gpt --tokenizer tokenizer.json
+```
+
+### 6. Generate text from a model
+
+```bash
+pytensorforge generate exports/my-gpt --prompt "Once upon a time" --max-new-tokens 128
+```
+
+### 7. Serve the model through an OpenAI-compatible API
+
+```bash
+pytensorforge serve exports/my-gpt --name my-gpt --host 127.0.0.1 --port 8000
+```
+
+The server exposes an OpenAI-compatible interface at the configured host and port, allowing local or remote clients to interact with the model in a familiar API format.
+
+## Documentation and Design Notes
+
+The repository includes a set of project documents covering the major stages of development, including:
+
+- `PHASE1_GPT_TRAINING.md`
+- `PHASE2_DATA_PIPELINE.md`
+- `PHASE3_INFERENCE.md`
+- `PHASE4_SERVING.md`
+- `PHASE5_TRAINING_EFFICIENCY.md`
+- `PHASE6_CONTEXT_EXTENSION.md`
+- `PHASE7_FINETUNING.md`
+- `TOKENIZER.md`
+
+These documents provide implementation context for the framework’s research and engineering goals, especially around GPT training, data preparation, and inference optimization.
+
+## Example Workflow
+
+A typical PyTensorForge workflow consists of:
+
+1. Training or preparing a tokenizer
+2. Building a dataset or sharded corpus
+3. Training a model with checkpoints enabled
+4. Exporting optimized checkpoints for inference
+5. Serving the model via the built-in API or generating responses directly
+
+## Contributing
+
+Contributions are welcome. Developers are encouraged to open issues, propose enhancements, or submit pull requests for bug fixes, feature additions, performance improvements, and documentation updates.
 
 ## License
 
-This project is provided under the terms of the repository license. Check the project root for license details.
+This repository does not currently include a dedicated LICENSE file in the root directory. Please consult the repository owner or project documentation for the applicable licensing terms before commercial or redistribution use.
+
+## Project Status
+
+PyTensorForge is a research-driven and experimentation-focused framework with support for both foundational ML primitives and modern transformer-based model workflows. It is best suited for learning, iterative development, and custom AI experimentation in a compact Python codebase.
 
 
