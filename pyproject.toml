@@ -9,7 +9,7 @@ version = "0.1.0"
 description = "Deep Learning Framework"
 
 authors = [
-    {name="Chidume Nnamdi"}
+    {name="Nnamdi Chidume"}
 ]
 
 readme = "README.md"
@@ -17,5 +17,21 @@ readme = "README.md"
 requires-python = ">=3.10"
 
 dependencies = [
-    "numpy>=2.0"
+    "numpy>=2.0",
+    "pyyaml>=6.0"
 ]
+
+license = { file = "LICENSE" }
+
+[project.scripts]
+pytensorforge = "cli:main"
+
+[tool.setuptools]
+py-modules = ["cli"]
+
+[tool.setuptools.packages.find]
+include = ["src*"]
+
+[project.urls]
+Homepage = "http://github.com/philipszdavido/pytensorforge"
+Repository = "http://github.com/philipszdavido/pytensorforge"
