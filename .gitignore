@@ -9,3 +9,10 @@ dist/
 *.ptf
 *.bin
 *.npz
+checkpoints/
+checkpoints-chat/
+shakespeare_checkpoints/
+exports/
+.vscode/
+*.csv
+*.DS_Store
