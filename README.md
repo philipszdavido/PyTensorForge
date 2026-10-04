@@ -55,8 +55,6 @@ PyTensorForge is also designed for learning, experimentation, and rapid prototyp
    `tokenize`, `prepare-dataset`, `generate`, `export`, `serve`). Runtime dependencies are
    `numpy` and `pyyaml` only.
 
-> Note: This repository is intended for educational use and may require additional dependencies depending on the development environment.
-
 ## Usage
 
 Import components from the package and build models using the provided modules. Example:
