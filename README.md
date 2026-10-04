@@ -1,6 +1,8 @@
 # PyTensorForge
 
-PyTensorForge is a lightweight Python machine learning framework designed for learning, experimentation, and rapid prototyping. It provides a modular core for tensor operations, neural network layers, activation functions, optimizers, loss metrics, and model definitions.
+PyTensorForge is a machine learning framework. It provides a modular core for tensor operations, neural network layers, activation functions, optimizers, loss metrics, and model definitions. It is designed to build and train enterprise-level models for computer vision, forecasting, LLM, NLP, etc.
+
+PyTensorForge is also designed for learning, experimentation, and rapid prototyping
 
 ## Key Features
 
