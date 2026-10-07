@@ -1,12 +1,12 @@
 import pandas as pd
 
-from src.core.Tensor import Tensor
-from src.models.embedding.Embedding import Embedding
-from src.models.seq.Sequential import Sequential
-from src.neural.Dense import Dense
-from src.neural.LSTM import LSTM
-from src.neural.RNN import RNN
-from src.serialization.modelio import ModelIO
+from pytensorforge.core.Tensor import Tensor
+from pytensorforge.models.embedding.Embedding import Embedding
+from pytensorforge.models.seq.Sequential import Sequential
+from pytensorforge.neural.Dense import Dense
+from pytensorforge.neural.LSTM import LSTM
+from pytensorforge.neural.RNN import RNN
+from pytensorforge.serialization.modelio import ModelIO
 
 text = """
 the cat sat on the mat.

@@ -1,8 +1,8 @@
-from src.core.Tensor import Tensor
-from src.models.embedding.Embedding import Embedding
-from src.models.seq.Sequential import Sequential
-from src.neural.Dense import Dense
-from src.neural.RNN import RNN
+from pytensorforge.core.Tensor import Tensor
+from pytensorforge.models.embedding.Embedding import Embedding
+from pytensorforge.models.seq.Sequential import Sequential
+from pytensorforge.neural.Dense import Dense
+from pytensorforge.neural.RNN import RNN
 
 text = """
 the cat sat on the mat
