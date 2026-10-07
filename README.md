@@ -43,6 +43,52 @@ PyTensorForge includes:
 - Config-driven execution for reproducible setups
 - Support for chat templates and assistant-style supervised finetuning patterns
 
+## Installation using pip
+
+```shell
+pip install pytensorforge
+```
+
+```python
+from pytensorforge.core.Tensor import Tensor
+from pytensorforge.models.seq.Sequential import Sequential
+from pytensorforge.neural.Dense import Dense
+
+X = Tensor([[0,0],[0,1],[1,0],[1,1]], requires_grad=False)
+y = Tensor([[0],[1],[1],[0]], requires_grad=False)
+
+model = Sequential()
+model.add(Dense(8, activation="relu"))
+model.add(Dense(1, activation="sigmoid"))
+model.compile(optimizer="adam", loss="binary_crossentropy")
+model.fit(X, y, epochs=2000)
+print(model.predict(X).data)
+```
+
+```python
+from pytensorforge.core.Tensor import Tensor
+from pytensorforge.models.seq.Sequential import Sequential
+from pytensorforge.neural.Dense import Dense
+
+X = Tensor([[1],[2],[3],[4],[5]], requires_grad=False)
+y = Tensor([[2],[4],[6],[8],[10]], requires_grad=False)
+
+model = Sequential()
+model.add(Dense(16, activation="relu"))
+model.add(Dense(1))
+model.compile(optimizer="adam", loss="mse")
+model.fit(X, y, epochs=3000)
+print(model.predict(Tensor([[6]], requires_grad=False)).data)
+```
+
+```python
+from pytensorforge.inference.runtime import load_model
+
+gen = load_model("exports/my-gpt")
+print(gen.generate("Once upon a time", max_new_tokens=50).text)
+gen.stop()
+```
+
 ## Project Structure
 
 - `src/core/` – tensor and numeric primitives

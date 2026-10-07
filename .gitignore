@@ -5,14 +5,5 @@ build/
 pytensorforge.egg-info/
 .idea/
 dist/
-*.jsonl
-*.ptf
-*.bin
-*.npz
-checkpoints/
-checkpoints-chat/
-shakespeare_checkpoints/
-exports/
 .vscode/
-*.csv
 *.DS_Store

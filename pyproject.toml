@@ -1,37 +1,21 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "pytensorforge"
-version = "0.1.0"
-
+version = "0.1.2"
 description = "Deep Learning Framework"
-
-authors = [
-    {name="Nnamdi Chidume"}
-]
-
 readme = "README.md"
-
 requires-python = ">=3.10"
-
-dependencies = [
-    "numpy>=2.0",
-    "pyyaml>=6.0"
-]
-
-license = { file = "LICENSE" }
-
-[project.scripts]
-pytensorforge = "cli:main"
-
-[tool.setuptools]
-py-modules = ["cli"]
-
-[tool.setuptools.packages.find]
-include = ["src*"]
+authors = [{ name = "Nnamdi Chidume" }]
+license = "MIT"
+license-files = ["LICENSE"]
+dependencies = ["numpy>=1.24", "pyyaml>=6.0"]
 
 [project.urls]
-Homepage = "http://github.com/philipszdavido/pytensorforge"
-Repository = "http://github.com/philipszdavido/pytensorforge"
+Homepage = "https://github.com/philipszdavido/pytensorforge"
+Repository = "https://github.com/philipszdavido/pytensorforge"
+
+[tool.setuptools.packages.find]
+include = ["pytensorforge*"]
