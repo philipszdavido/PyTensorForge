@@ -1,9 +1,9 @@
-from src.core.Tensor import Tensor
-from src.loss.MSELoss import MSELoss
-from src.models.regression.Linear import Linear
+from pytensorforge.core.Tensor import Tensor
+from pytensorforge.loss.MSELoss import MSELoss
+from pytensorforge.models.regression.Linear import Linear
 import numpy as np
 
-from src.optimizers.SGD import SGD
+from pytensorforge.optimizers.SGD import SGD
 
 
 def normalize(X):

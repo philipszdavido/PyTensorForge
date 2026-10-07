@@ -11,16 +11,16 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from src.data.corpus import CorpusIndex
-from src.data.document_stream import DocumentReader
-from src.data.shard_builder import build_shards
-from src.data.validation import validate_corpus, validate_shards
-from src.inference.runtime import load_model
-from src.inference.text import StreamDecoder
-from src.tokenization.base import identity_matches
-from src.tokenization.bpe import PTFBPETokenizer
-from src.tokenization.bytebpe import ByteLevelBPETokenizer, _bpe_heap, _bpe_simple, train_byte_bpe
-from src.tokenization.registry import load_tokenizer
+from pytensorforge.data.corpus import CorpusIndex
+from pytensorforge.data.document_stream import DocumentReader
+from pytensorforge.data.shard_builder import build_shards
+from pytensorforge.data.validation import validate_corpus, validate_shards
+from pytensorforge.inference.runtime import load_model
+from pytensorforge.inference.text import StreamDecoder
+from pytensorforge.tokenization.base import identity_matches
+from pytensorforge.tokenization.bpe import PTFBPETokenizer
+from pytensorforge.tokenization.bytebpe import ByteLevelBPETokenizer, _bpe_heap, _bpe_simple, train_byte_bpe
+from pytensorforge.tokenization.registry import load_tokenizer
 
 VOCAB = [
     "the", "quick", "brown", "fox", "jumps", "over", "lazy", "dog", "tokenizer", "streaming",

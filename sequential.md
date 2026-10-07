@@ -11,8 +11,8 @@ A `Sequential` model assumes that the output of one layer is the input of the ne
 A typical PyTensorForge workflow looks like this:
 
 ```python
-from src.models.seq.Sequential import Sequential
-from src.neural.Dense import Dense
+from pytensorforge.models.seq.Sequential import Sequential
+from pytensorforge.neural.Dense import Dense
 
 model = Sequential()
 
@@ -58,7 +58,7 @@ Save model
 Create an empty model.
 
 ```python
-from src.models.seq.Sequential import Sequential
+from pytensorforge.models.seq.Sequential import Sequential
 
 model = Sequential()
 ```
@@ -152,7 +152,7 @@ model.compile(
 or
 
 ```python
-from src.optimizers import Adam
+from pytensorforge.optimizers import Adam
 
 model.compile(
     optimizer=Adam(lr=1e-4),

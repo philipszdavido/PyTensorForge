@@ -1,4 +1,4 @@
-from src.models.tokenizer.BPETokenizer import BPETokenizer
+from pytensorforge.models.tokenizer.BPETokenizer import BPETokenizer
 
 tokenizer = BPETokenizer(vocab_size=100)
 tokenizer.fit(["the cat sat on the mat"])

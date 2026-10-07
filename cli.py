@@ -6,20 +6,20 @@ import sys
 
 import numpy as np
 
-from src.config import TrainConfig
+from pytensorforge.config import TrainConfig
 
 
-from src.data.corpus import CorpusIndex
-from src.data.shard_builder import build_shards
-from src.data.sharded_dataset import ShardedTokenDataset, is_shard_dir
-from src.data.streaming_dataset import StreamingTextDataset
-from src.data.validation import validate_corpus, validate_shards
-from src.models.gpt.config import GPTConfig
-from src.models.gpt.model import GPTModel
-from src.tokenization.bpe import PTFBPETokenizer
-from src.tokenization.bytebpe import train_byte_bpe
-from src.tokenization.registry import load_tokenizer
-from src.training.trainer import Trainer
+from pytensorforge.data.corpus import CorpusIndex
+from pytensorforge.data.shard_builder import build_shards
+from pytensorforge.data.sharded_dataset import ShardedTokenDataset, is_shard_dir
+from pytensorforge.data.streaming_dataset import StreamingTextDataset
+from pytensorforge.data.validation import validate_corpus, validate_shards
+from pytensorforge.models.gpt.config import GPTConfig
+from pytensorforge.models.gpt.model import GPTModel
+from pytensorforge.tokenization.bpe import PTFBPETokenizer
+from pytensorforge.tokenization.bytebpe import train_byte_bpe
+from pytensorforge.tokenization.registry import load_tokenizer
+from pytensorforge.training.trainer import Trainer
 
 NOT_YET_IMPLEMENTED = {}
 
@@ -75,8 +75,8 @@ def _dataset_for(paths, tokenizer, config, shuffle=False, seed=0, workers=1):
 
 
 def _chat_dataset(corpus, tokenizer, config):
-    from src.data.chat_dataset import ChatSFTDataset
-    from src.inference.chat_template import ChatTemplate
+    from pytensorforge.data.chat_dataset import ChatSFTDataset
+    from pytensorforge.inference.chat_template import ChatTemplate
 
     template = ChatTemplate.resolve(config.data.chat_template).bind(tokenizer)
     return ChatSFTDataset(corpus, template, config.data.sequence_length, packing=config.data.chat_packing,
@@ -213,7 +213,7 @@ def cmd_evaluate(args):
 
 
 def cmd_inspect(args):
-    from src.training.checkpoint_manager import CheckpointManager
+    from pytensorforge.training.checkpoint_manager import CheckpointManager
 
     manager = CheckpointManager(args.checkpoint_dir if args.checkpoint_dir else ".")
     payload = manager.load(args.path if args.path != "latest" else None)
@@ -234,7 +234,7 @@ def cmd_inspect(args):
 
 
 def _sample_texts(corpus, text_field, read_buffer_size, max_chars):
-    from src.data.document_stream import DocumentReader
+    from pytensorforge.data.document_stream import DocumentReader
 
     reader = DocumentReader(corpus.files, read_buffer_size=read_buffer_size, text_field=text_field)
     per_file = max(max_chars // max(len(corpus.files), 1), 1 << 20)
@@ -329,8 +329,8 @@ def cmd_validate(args):
 
 
 def cmd_export(args):
-    from src.inference.config import GenerationConfig
-    from src.inference.export import export_model
+    from pytensorforge.inference.config import GenerationConfig
+    from pytensorforge.inference.export import export_model
 
     generation = None
 
@@ -353,7 +353,7 @@ def cmd_export(args):
 def cmd_generate(args):
     import sys as _sys
 
-    from src.inference.runtime import load_model
+    from pytensorforge.inference.runtime import load_model
 
     model = load_model(args.model, cache_budget_bytes=args.cache_budget_mb * (1 << 20) if args.cache_budget_mb is not None else None)
 
@@ -394,7 +394,7 @@ def cmd_generate(args):
 
 
 def _serve_config(args):
-    from src.serving.config import ModelEntry, load_server_config, server_config_from_dict
+    from pytensorforge.serving.config import ModelEntry, load_server_config, server_config_from_dict
 
     if args.config:
         if args.model:
@@ -446,7 +446,7 @@ def _serve_config(args):
 def cmd_serve(args):
     import logging
 
-    from src.serving.server import APIServer, InsecureConfiguration
+    from pytensorforge.serving.server import APIServer, InsecureConfiguration
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 

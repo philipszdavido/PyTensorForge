@@ -12,19 +12,19 @@ import yaml
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 import cli
-from src.config import TrainConfig
-from src.core.Tensor import Tensor
-from src.data.chat_dataset import ChatRecordError, ChatSFTDataset
-from src.data.corpus import CorpusIndex
-from src.inference.chat_template import ChatTemplate, ChatTemplateError
-from src.inference.export import export_model, flatten_state
-from src.inference.runtime import load_model
-from src.loss.CrossEntropyWithLogitsLoss import CrossEntropyWithLogitsLoss
-from src.tokenization.bytebpe import train_byte_bpe
-from src.tokenization.registry import load_tokenizer
-from src.training.checkpoint_manager import read_checkpoint
-from src.training.losses import masked_cross_entropy
-from src.training.trainer import Trainer
+from pytensorforge.config import TrainConfig
+from pytensorforge.core.Tensor import Tensor
+from pytensorforge.data.chat_dataset import ChatRecordError, ChatSFTDataset
+from pytensorforge.data.corpus import CorpusIndex
+from pytensorforge.inference.chat_template import ChatTemplate, ChatTemplateError
+from pytensorforge.inference.export import export_model, flatten_state
+from pytensorforge.inference.runtime import load_model
+from pytensorforge.loss.CrossEntropyWithLogitsLoss import CrossEntropyWithLogitsLoss
+from pytensorforge.tokenization.bytebpe import train_byte_bpe
+from pytensorforge.tokenization.registry import load_tokenizer
+from pytensorforge.training.checkpoint_manager import read_checkpoint
+from pytensorforge.training.losses import masked_cross_entropy
+from pytensorforge.training.trainer import Trainer
 from test.gpt.test_phase5_training import check, directional_check
 
 SPECIALS = ["<|system|>", "<|user|>", "<|assistant|>", "<|end|>"]

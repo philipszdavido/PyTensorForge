@@ -14,14 +14,14 @@ const html = (src) => {
 
 const attacks = [
   "<script>alert(1)</script>",
-  "<img src=x onerror=alert(1)>",
+  "<img pytensorforge=x onerror=alert(1)>",
   "[click](javascript:alert(1))",
   "[click](JaVaScRiPt:alert(1))",
   "[x](data:text/html,<script>alert(1)</script>)",
   "**<svg onload=alert(1)>**",
   "`<b>code</b>`",
   "```html\n<script>alert(1)</script>\n```",
-  "> <iframe src=javascript:alert(1)>",
+  "> <iframe pytensorforge=javascript:alert(1)>",
   "- <a href=javascript:alert(1)>x</a>",
 ];
 for (const src of attacks) {

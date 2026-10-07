@@ -13,11 +13,12 @@ model/
 ```
 
 ```python
-from src.inference.runtime import load_model
+from pytensorforge.inference.runtime import load_model
+
 model = load_model("model/")
 result = model.generate("the quick", max_new_tokens=32, temperature=0.8, top_k=40)
 for piece in model.generate_stream("Hello"):
-    print(piece, end="")
+  print(piece, end="")
 ```
 
 CLI: `export CHECKPOINT --output DIR --tokenizer T [--dtype float16]`,

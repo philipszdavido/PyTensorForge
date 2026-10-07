@@ -4,12 +4,12 @@ import pandas as pd
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
-from src.core.Tensor import Tensor
-from src.models.seq.Sequential import Sequential
-from src.models.embedding.Embedding import Embedding
-from src.neural.RNN import RNN
-from src.neural.Dense import Dense
-from src.activations.Softmax import Softmax
+from pytensorforge.core.Tensor import Tensor
+from pytensorforge.models.seq.Sequential import Sequential
+from pytensorforge.models.embedding.Embedding import Embedding
+from pytensorforge.neural.RNN import RNN
+from pytensorforge.neural.Dense import Dense
+from pytensorforge.activations.Softmax import Softmax
 
 
 ##################################################

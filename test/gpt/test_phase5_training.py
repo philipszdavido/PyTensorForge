@@ -13,23 +13,23 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from src.config import CheckpointSpec, DataSpec, EvaluationSpec, ModelSpec, RuntimeSpec, TrainConfig, TrainingSpec
-from src.core.Tensor import Tensor, no_grad
-from src.data.corpus import CorpusIndex
-from src.data.streaming_dataset import StreamingTextDataset
-from src.inference.engine import InferenceModel
-from src.inference.export import export_model, flatten_state
-from src.inference.runtime import load_model
-from src.loss.CrossEntropyWithLogitsLoss import CrossEntropyWithLogitsLoss
-from src.models.gpt.attention import CausalSelfAttention, causal_attention
-from src.models.gpt.config import GPTConfig
-from src.models.gpt.model import GPTModel
-from src.models.gpt.rope import rotary_tables
-from src.models.transformers.MultiHeadAttention import MultiHeadAttention
-from src.tokenization.bpe import PTFBPETokenizer
-from src.tokenization.bytebpe import train_byte_bpe
-from src.training.precision import GradScaler, autocast, round_bf16, round_fp16
-from src.training.trainer import Trainer
+from pytensorforge.config import CheckpointSpec, DataSpec, EvaluationSpec, ModelSpec, RuntimeSpec, TrainConfig, TrainingSpec
+from pytensorforge.core.Tensor import Tensor, no_grad
+from pytensorforge.data.corpus import CorpusIndex
+from pytensorforge.data.streaming_dataset import StreamingTextDataset
+from pytensorforge.inference.engine import InferenceModel
+from pytensorforge.inference.export import export_model, flatten_state
+from pytensorforge.inference.runtime import load_model
+from pytensorforge.loss.CrossEntropyWithLogitsLoss import CrossEntropyWithLogitsLoss
+from pytensorforge.models.gpt.attention import CausalSelfAttention, causal_attention
+from pytensorforge.models.gpt.config import GPTConfig
+from pytensorforge.models.gpt.model import GPTModel
+from pytensorforge.models.gpt.rope import rotary_tables
+from pytensorforge.models.transformers.MultiHeadAttention import MultiHeadAttention
+from pytensorforge.tokenization.bpe import PTFBPETokenizer
+from pytensorforge.tokenization.bytebpe import train_byte_bpe
+from pytensorforge.training.precision import GradScaler, autocast, round_bf16, round_fp16
+from pytensorforge.training.trainer import Trainer
 
 WORDS = "the quick brown fox jumps over lazy dog cat mat mouse house python code model token stream shard".split()
 
@@ -534,7 +534,7 @@ def test_parallel_tokenization(tmp, corpus_dir):
     bbpe_path = os.path.join(tmp, "bbpe.json")
     bbpe.save(bbpe_path)
 
-    from src.tokenization.registry import load_tokenizer
+    from pytensorforge.tokenization.registry import load_tokenizer
     bbpe = load_tokenizer(bbpe_path)
     os.makedirs(tok_dir)
     word_tok, _ = make_tokenizer(tok_dir, corpus_dir)

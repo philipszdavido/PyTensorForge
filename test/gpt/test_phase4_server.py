@@ -13,18 +13,18 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from src.inference.chat_template import BUILTIN_TEMPLATES, ChatTemplate, ChatTemplateError, PromptTooLong
-from src.inference.config import GenerationConfig
-from src.inference.export import export_model
-from src.inference.runtime import load_model
-from src.serving import errors
-from src.serving.config import LimitsConfig, server_config_from_dict
-from src.serving.metrics import Registry
-from src.serving.model_server import ModelServer
-from src.serving.protocol import parse_chat_request, parse_completion_request
-from src.serving.security import KeyStore, RateLimiter, hash_key
-from src.serving.server import APIServer, InsecureConfiguration
-from src.tokenization.bytebpe import train_byte_bpe
+from pytensorforge.inference.chat_template import BUILTIN_TEMPLATES, ChatTemplate, ChatTemplateError, PromptTooLong
+from pytensorforge.inference.config import GenerationConfig
+from pytensorforge.inference.export import export_model
+from pytensorforge.inference.runtime import load_model
+from pytensorforge.serving import errors
+from pytensorforge.serving.config import LimitsConfig, server_config_from_dict
+from pytensorforge.serving.metrics import Registry
+from pytensorforge.serving.model_server import ModelServer
+from pytensorforge.serving.protocol import parse_chat_request, parse_completion_request
+from pytensorforge.serving.security import KeyStore, RateLimiter, hash_key
+from pytensorforge.serving.server import APIServer, InsecureConfiguration
+from pytensorforge.tokenization.bytebpe import train_byte_bpe
 from test.gpt.test_phase3_inference import make_model, save_checkpoint
 
 CHAT_SPECIALS = ["<|system|>", "<|user|>", "<|assistant|>", "<|end|>"]
@@ -508,7 +508,7 @@ def test_http_end_to_end(tmp, model_dir):
 
         resp, body = request(port, "GET", "/")
         check(resp.status == 200 and b"PyTensorForge Chat" in body, "web UI served")
-        check("script-src 'self'" in resp.getheader("Content-Security-Policy"), "UI CSP")
+        check("script-pytensorforge 'self'" in resp.getheader("Content-Security-Policy"), "UI CSP")
 
         for bad_path in ("/../../etc/passwd", "/%2e%2e/%2e%2e/etc/passwd", "/app.js/../../../README.md"):
             resp, body = request(port, "GET", bad_path)

@@ -2,14 +2,14 @@ import time
 
 import numpy as np
 
-from src.core.Tensor import Tensor
-from src.models.embedding.Embedding import Embedding
-from src.models.seq.Sequential import Sequential
-from src.models.transformers.LastToken import LastToken
-from src.models.transformers.TransformerBlock import TransformerBlock
-from src.neural.Dense import Dense
-from src.optimizers import Adam
-from src.serialization.modelio import ModelIO
+from pytensorforge.core.Tensor import Tensor
+from pytensorforge.models.embedding.Embedding import Embedding
+from pytensorforge.models.seq.Sequential import Sequential
+from pytensorforge.models.transformers.LastToken import LastToken
+from pytensorforge.models.transformers.TransformerBlock import TransformerBlock
+from pytensorforge.neural.Dense import Dense
+from pytensorforge.optimizers import Adam
+from pytensorforge.serialization.modelio import ModelIO
 
 ####################################################
 # Load metadata

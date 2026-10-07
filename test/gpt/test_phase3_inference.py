@@ -9,15 +9,15 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from src.core.Tensor import Tensor
-from src.inference.config import GenerationConfig
-from src.inference.export import export_model, flatten_state
-from src.inference.runtime import load_model
-from src.inference.scheduler import GenerationRequest
-from src.models.gpt.config import GPTConfig
-from src.models.gpt.model import GPTModel
-from src.tokenization.bpe import PTFBPETokenizer
-from src.training.checkpoint_manager import CheckpointManager
+from pytensorforge.core.Tensor import Tensor
+from pytensorforge.inference.config import GenerationConfig
+from pytensorforge.inference.export import export_model, flatten_state
+from pytensorforge.inference.runtime import load_model
+from pytensorforge.inference.scheduler import GenerationRequest
+from pytensorforge.models.gpt.config import GPTConfig
+from pytensorforge.models.gpt.model import GPTModel
+from pytensorforge.tokenization.bpe import PTFBPETokenizer
+from pytensorforge.training.checkpoint_manager import CheckpointManager
 
 WORDS = "the quick brown fox jumps over lazy dog cat mat mouse house python code model token stream shard".split()
 

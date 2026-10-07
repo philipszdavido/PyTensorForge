@@ -1,0 +1,14 @@
+import numpy as np
+
+from pytensorforge.initializers.Initializer import Initializer
+
+
+class HeUniform(Initializer):
+    def __call__(self, shape):
+        fan_in = shape[0]
+        limit = np.sqrt(6.0 / fan_in)
+        return np.random.uniform(
+            -limit,
+            limit,
+            shape,
+        ).astype(np.float32)

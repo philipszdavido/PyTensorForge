@@ -12,17 +12,17 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from src.core.Tensor import Tensor
-from src.data.corpus import CorpusIndex
-from src.data.streaming_dataset import StreamingTextDataset
-from src.inference.engine import InferenceModel
-from src.inference.export import flatten_state
-from src.loss.CrossEntropyWithLogitsLoss import CrossEntropyWithLogitsLoss
-from src.models.gpt.config import GPTConfig
-from src.models.gpt.model import GPTModel
-from src.tokenization.bytebpe import train_byte_bpe
-from src.tokenization.registry import load_tokenizer
-from src.training.precision import autocast
+from pytensorforge.core.Tensor import Tensor
+from pytensorforge.data.corpus import CorpusIndex
+from pytensorforge.data.streaming_dataset import StreamingTextDataset
+from pytensorforge.inference.engine import InferenceModel
+from pytensorforge.inference.export import flatten_state
+from pytensorforge.loss.CrossEntropyWithLogitsLoss import CrossEntropyWithLogitsLoss
+from pytensorforge.models.gpt.config import GPTConfig
+from pytensorforge.models.gpt.model import GPTModel
+from pytensorforge.tokenization.bytebpe import train_byte_bpe
+from pytensorforge.tokenization.registry import load_tokenizer
+from pytensorforge.training.precision import autocast
 
 
 def bench_step(args):

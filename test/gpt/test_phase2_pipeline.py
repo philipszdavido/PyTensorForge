@@ -9,16 +9,16 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from src.config import CheckpointSpec, DataSpec, EvaluationSpec, ModelSpec, RuntimeSpec, TrainConfig, TrainingSpec
-from src.data.corpus import CorpusIndex
-from src.data.shard_builder import build_shards
-from src.data.sharded_dataset import ShardedTokenDataset
-from src.data.streaming_dataset import StreamingTextDataset
-from src.data.validation import validate_corpus, validate_shards
-from src.models.gpt.config import GPTConfig
-from src.models.gpt.model import GPTModel
-from src.tokenization.bpe import PTFBPETokenizer
-from src.training.trainer import Trainer
+from pytensorforge.config import CheckpointSpec, DataSpec, EvaluationSpec, ModelSpec, RuntimeSpec, TrainConfig, TrainingSpec
+from pytensorforge.data.corpus import CorpusIndex
+from pytensorforge.data.shard_builder import build_shards
+from pytensorforge.data.sharded_dataset import ShardedTokenDataset
+from pytensorforge.data.streaming_dataset import StreamingTextDataset
+from pytensorforge.data.validation import validate_corpus, validate_shards
+from pytensorforge.models.gpt.config import GPTConfig
+from pytensorforge.models.gpt.model import GPTModel
+from pytensorforge.tokenization.bpe import PTFBPETokenizer
+from pytensorforge.training.trainer import Trainer
 
 WORDS = "the quick brown fox jumps over lazy dog cat mat mouse house python code model token stream shard".split()
 

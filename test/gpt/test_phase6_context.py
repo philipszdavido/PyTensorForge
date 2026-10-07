@@ -8,15 +8,15 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from src.core.Tensor import Tensor, no_grad
-from src.inference.engine import InferenceModel
-from src.inference.export import export_model, flatten_state
-from src.inference.runtime import load_model
-from src.models.gpt.config import GPTConfig
-from src.models.gpt.context import describe_context, extend_context
-from src.models.gpt.model import GPTModel
-from src.models.gpt.rope import RotaryTables
-from src.serving.config import server_config_from_dict
+from pytensorforge.core.Tensor import Tensor, no_grad
+from pytensorforge.inference.engine import InferenceModel
+from pytensorforge.inference.export import export_model, flatten_state
+from pytensorforge.inference.runtime import load_model
+from pytensorforge.models.gpt.config import GPTConfig
+from pytensorforge.models.gpt.context import describe_context, extend_context
+from pytensorforge.models.gpt.model import GPTModel
+from pytensorforge.models.gpt.rope import RotaryTables
+from pytensorforge.serving.config import server_config_from_dict
 from test.gpt.test_phase4_server import auth, request, start_server
 from test.gpt.test_phase5_training import build_trainer, check, make_corpus, make_tokenizer
 

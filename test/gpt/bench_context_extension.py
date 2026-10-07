@@ -8,13 +8,13 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from src.core.Tensor import Tensor, no_grad
-from src.loss.CrossEntropyWithLogitsLoss import CrossEntropyWithLogitsLoss
-from src.models.gpt.config import GPTConfig
-from src.models.gpt.context import EXTENSION_METHODS, extend_context
-from src.models.gpt.model import GPTModel
-from src.optimizers.AdamW import AdamW
-from src.tokenization.bytebpe import train_byte_bpe
+from pytensorforge.core.Tensor import Tensor, no_grad
+from pytensorforge.loss.CrossEntropyWithLogitsLoss import CrossEntropyWithLogitsLoss
+from pytensorforge.models.gpt.config import GPTConfig
+from pytensorforge.models.gpt.context import EXTENSION_METHODS, extend_context
+from pytensorforge.models.gpt.model import GPTModel
+from pytensorforge.optimizers.AdamW import AdamW
+from pytensorforge.tokenization.bytebpe import train_byte_bpe
 
 
 def english_corpus():

@@ -1,6 +1,6 @@
 # import numpy as np
 #
-# from src.neural.Dense import Dense
+# from pytensorforge.neural.Dense import Dense
 #
 # dense = Dense(9, "relu")
 #
@@ -8,9 +8,9 @@
 # y = dense.call(np.array([[1,2],[3,4],[5,6]]))
 #
 # print(y)
-from src.core.Tensor import Tensor
-from src.models.seq.Sequential import Sequential
-from src.neural.Dense import Dense
+from pytensorforge.core.Tensor import Tensor
+from pytensorforge.models.seq.Sequential import Sequential
+from pytensorforge.neural.Dense import Dense
 
 # X_train = Tensor([
 #     [1, 2],
@@ -103,9 +103,9 @@ from src.neural.Dense import Dense
 #
 # model.fit(X_train, y_train, epochs=1000, batch_size=4)
 
-from src.core.Tensor import Tensor
-from src.models.seq.Sequential import Sequential
-from src.neural.Dense import Dense
+from pytensorforge.core.Tensor import Tensor
+from pytensorforge.models.seq.Sequential import Sequential
+from pytensorforge.neural.Dense import Dense
 
 # Train
 # X_train = Tensor([

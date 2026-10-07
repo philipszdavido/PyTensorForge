@@ -10,7 +10,7 @@ RUN pip install --no-cache-dir numpy pyyaml
 
 # Run from /app (not pip-installed): the server finds the web UI at ./web/dist
 COPY cli.py ./
-COPY src ./src
+COPY pytensorforge ./src
 COPY web/dist ./web/dist
 COPY serve.yaml ./serve.yaml
 COPY start.sh ./start.sh

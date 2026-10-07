@@ -1,10 +1,10 @@
-from src.loss.bce import BCELoss
-from src.loss.MSE import MSELoss
-from src.models.regression.Logistic import Logistic
+from pytensorforge.loss.bce import BCELoss
+from pytensorforge.loss.MSE import MSELoss
+from pytensorforge.models.regression.Logistic import Logistic
 import numpy as np
 import matplotlib.pyplot as plt
 
-from src.optimizers.SGD import SGD
+from pytensorforge.optimizers.SGD import SGD
 
 
 def normalize(X):
