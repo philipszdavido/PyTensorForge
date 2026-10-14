@@ -7,3 +7,10 @@ pytensorforge.egg-info/
 dist/
 .vscode/
 *.DS_Store
+checkpoints/
+checkpoints-story/
+data/
+exports/
+web/node_modules/
+web/dist
+tokenizer.json

@@ -31,4 +31,4 @@ evaluation:
   interval_steps: 200
   max_batches: 25
 runtime:
-  device: cuda
+  device: mps
