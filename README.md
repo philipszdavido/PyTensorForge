@@ -173,21 +173,6 @@ pytensorforge serve exports/my-gpt --name my-gpt --host 127.0.0.1 --port 8000
 
 The server exposes an OpenAI-compatible interface at the configured host and port, allowing local or remote clients to interact with the model in a familiar API format.
 
-## Documentation and Design Notes
-
-The repository includes a set of project documents covering the major stages of development, including:
-
-- `PHASE1_GPT_TRAINING.md`
-- `PHASE2_DATA_PIPELINE.md`
-- `PHASE3_INFERENCE.md`
-- `PHASE4_SERVING.md`
-- `PHASE5_TRAINING_EFFICIENCY.md`
-- `PHASE6_CONTEXT_EXTENSION.md`
-- `PHASE7_FINETUNING.md`
-- `TOKENIZER.md`
-
-These documents provide implementation context for the framework’s research and engineering goals, especially around GPT training, data preparation, and inference optimization.
-
 ## Example Workflow
 
 A typical PyTensorForge workflow consists of:
