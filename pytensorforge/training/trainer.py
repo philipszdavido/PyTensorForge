@@ -9,6 +9,7 @@ from dataclasses import asdict
 
 import numpy as np
 
+from pytensorforge import backend
 from pytensorforge.core.Tensor import Tensor, no_grad
 from pytensorforge.data.prefetch import PrefetchLoader
 from pytensorforge.loss.CrossEntropyWithLogitsLoss import CrossEntropyWithLogitsLoss
@@ -55,8 +56,23 @@ class Trainer:
         if config.training.precision not in PRECISIONS:
             raise ValueError(f"unknown precision '{config.training.precision}'; choose one of {PRECISIONS}")
 
-        if config.runtime.device != "cpu":
-            raise ValueError("only the cpu device is available in this backend")
+        self.duty_cycle = float(config.runtime.duty_cycle)
+
+        if not 0.1 <= self.duty_cycle <= 1.0:
+            raise ValueError("runtime.duty_cycle must be between 0.1 and 1.0")
+
+        if self.duty_cycle < 1.0:
+            print(
+                f"duty cycle {self.duty_cycle:g}: resting {round((1.0 / self.duty_cycle - 1.0) * 100)}% of each step's "
+                f"compute time between steps (cooler and quieter, slower overall; tok/s below is the effective rate)"
+            )
+
+        if not backend.same_device(config.runtime.device):
+            raise ValueError(
+                f"runtime.device is '{config.runtime.device}' but the active device is '{backend.get_device()}'. "
+                "The device is fixed when the model is built: set runtime.device in the config and let the CLI "
+                "apply it, or call pytensorforge.set_device(...) before creating the model."
+            )
 
         self.model = model
         self.train_dataset = train_dataset
@@ -99,8 +115,16 @@ class Trainer:
         if self.precision != "fp32":
             print(
                 f"precision {self.precision}: matmul operands, outputs and gradients are rounded to "
-                f"{self.precision} with fp32 master weights; on the NumPy CPU backend this reproduces "
-                f"reduced-precision numerics, and it makes training slower and uses more memory, not less"
+                f"{self.precision} with fp32 master weights; "
+                + (
+                    "fp16 products run natively on the GPU tensor cores"
+                    if (backend.is_cuda() and self.precision == "fp16")
+                    or (backend.is_mps() and self.precision in ("fp16", "bf16"))
+                    else "this emulates reduced-precision numerics and is slower, not faster, than fp32 here"
+                    if backend.is_gpu()
+                    else "on the NumPy CPU backend this reproduces reduced-precision numerics, "
+                         "and it makes training slower and uses more memory, not less"
+                )
             )
 
         self.global_step = 0
@@ -153,14 +177,29 @@ class Trainer:
         self._stop_requested = True
         return self.save_checkpoint()
 
+    def _materialize_step(self, params):
+        """Evaluate the updated weights and optimizer state (no-op except on MLX, which evaluates lazily)."""
+        if not backend.is_mps():
+            return
+
+        state = []
+
+        for name in ("m", "v", "velocity"):
+            table = getattr(self.optimizer, name, None)
+
+            if isinstance(table, dict):
+                state.extend(table.values())
+
+        backend.materialize([p.data for p in params], state)
+
+        if self.optimizer_steps % 25 == 0:
+            backend.empty_cache()   # hand freed GPU buffers back so unified memory never creeps up
+
     def _clip_grad_norm(self, params, max_norm):
-        total_sq = 0.0
+        squares = [(p.grad * p.grad).sum() for p in params if p.requires_grad]
 
-        for p in params:
-            if p.requires_grad:
-                total_sq += float(np.sum(p.grad ** 2))
-
-        total_norm = total_sq ** 0.5
+        # one device-to-host transfer for the whole model instead of one per parameter
+        total_norm = float(backend.xp.stack(squares).astype(backend.xp.float64).sum()) ** 0.5 if squares else 0.0
 
         if max_norm and total_norm > max_norm:
             scale = max_norm / (total_norm + 1e-6)
@@ -193,6 +232,9 @@ class Trainer:
 
             with self.profiler.section("backward"):
                 scaled.backward(release=True)
+
+                # MLX is lazy: force the backward pass now so its activations are freed before the next micro-batch
+                backend.materialize([p._grad for p in self.model.parameters() if p._grad is not None])
 
         return float(loss.data)
 
@@ -266,6 +308,7 @@ class Trainer:
 
         try:
             while not self._stop_requested and not self._limits_reached():
+                step_started = time.perf_counter()
                 self.optimizer.zero_grad(params)
 
                 step_loss = 0.0
@@ -318,6 +361,7 @@ class Trainer:
                     lr = self.scheduler.step()
                     self.optimizer.lr = lr
                     self.optimizer.step(params)
+                    self._materialize_step(params)
 
                 self.optimizer_steps += 1
                 self.last_loss = step_loss
@@ -334,6 +378,8 @@ class Trainer:
 
                 if exhausted:
                     break
+
+                self._rest(step_started)
         finally:
             if self.save_on_exit and self._last_saved_step != self.optimizer_steps:
                 self.save_checkpoint()
@@ -346,6 +392,22 @@ class Trainer:
                 "last_eval": self.last_eval,
                 "profile": self.profiler.summary(),
             })
+
+    def _rest(self, step_started):
+        """Idle between steps so the machine runs at ``duty_cycle`` of full load. Wakes early on Ctrl-C."""
+        if self.duty_cycle >= 1.0:
+            return
+
+        busy = time.perf_counter() - step_started
+        end = time.perf_counter() + busy * (1.0 / self.duty_cycle - 1.0)
+
+        while not self._stop_requested:
+            left = end - time.perf_counter()
+
+            if left <= 0:
+                break
+
+            time.sleep(min(left, 0.2))
 
     def _maybe_evaluate(self):
         if self.val_dataset is None:
@@ -390,6 +452,8 @@ class Trainer:
             "max_rss_mb": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024,
             "profile_s": self.profiler.take_window(),
             "precision": self.precision,
+            "device": backend.get_device(),
+            "gpu_memory": backend.memory_stats(),
             "loss_scale": self.scaler.scale if self.scaler.enabled else None,
             "skipped_steps": self.scaler.skipped_steps,
             "time": time.time(),

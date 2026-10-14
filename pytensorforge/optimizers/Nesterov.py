@@ -1,6 +1,4 @@
-import numpy as np
-
-
+from pytensorforge.backend import clone, xp
 class Nesterov:
 
     def __init__(self, lr=0.01, momentum=0.9):
@@ -16,9 +14,9 @@ class Nesterov:
                 continue
 
             if id(p) not in self.velocity:
-                self.velocity[id(p)] = np.zeros_like(p.data)
+                self.velocity[id(p)] = xp.zeros_like(p.data)
 
-            v_prev = self.velocity[id(p)].copy()
+            v_prev = clone(self.velocity[id(p)])
 
             self.velocity[id(p)] = (
                 self.momentum * self.velocity[id(p)]

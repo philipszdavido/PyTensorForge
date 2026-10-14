@@ -1,5 +1,4 @@
-import numpy as np
-
+from pytensorforge.backend import xp
 from pytensorforge.core.Tensor import Tensor
 
 
@@ -8,7 +7,7 @@ class Stack:
     @staticmethod
     def forward(tensors, axis=0):
 
-        data = np.stack(
+        data = xp.stack(
             [t.data for t in tensors],
             axis=axis,
         )
@@ -27,7 +26,7 @@ class Stack:
                 if not tensor.requires_grad:
                     continue
 
-                grad = np.take(
+                grad = xp.take(
                     out.grad,
                     indices=i,
                     axis=axis,

@@ -12,6 +12,7 @@ import yaml
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 import cli
+from pytensorforge.backend import to_numpy
 from pytensorforge.config import TrainConfig
 from pytensorforge.core.Tensor import Tensor
 from pytensorforge.data.chat_dataset import ChatRecordError, ChatSFTDataset
@@ -94,7 +95,7 @@ def run_cli_train(path, resume=False):
 
 
 def flat(model):
-    return np.concatenate([p.data.ravel() for p in model.parameters()])
+    return np.concatenate([to_numpy(p.data).ravel() for p in model.parameters()])
 
 
 def test_masked_loss():
@@ -120,7 +121,8 @@ def test_masked_loss():
     masked.backward()
     sub.backward()
     check(abs(float(sub.data) - float(masked.data)) < 1e-5, "masked loss averages over unmasked tokens only")
-    check(np.allclose(d.grad[active], c.grad, atol=1e-6) and not d.grad[mask == 0].any(),
+    dg = to_numpy(d.grad)
+    check(np.allclose(dg[active], to_numpy(c.grad), atol=1e-6) and not dg[mask == 0].any(),
           "masked tokens receive exactly zero gradient")
     check(masked.token_count == mask.sum(), "loss reports its token count")
 

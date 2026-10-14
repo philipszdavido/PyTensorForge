@@ -1,5 +1,4 @@
-import numpy as np
-
+from pytensorforge.backend import xp
 from pytensorforge.core.Tensor import Tensor
 
 
@@ -9,20 +8,20 @@ class CrossEntropyWithLogitsLoss:
 
         batch = logits.shape[0]
 
-        shifted = logits.data - np.max(
+        shifted = logits.data - xp.max(
             logits.data,
             axis=-1,
             keepdims=True,
         )
 
-        logsumexp = np.log(
-            np.sum(np.exp(shifted), axis=-1)
+        logsumexp = xp.log(
+            xp.sum(xp.exp(shifted), axis=-1)
         )
 
-        indices = target.data.astype(np.int64)
+        indices = target.data.astype(xp.int64)
 
         loss = (
-            -shifted[np.arange(batch), indices]
+            -shifted[xp.arange(batch), indices]
             + logsumexp
         ).mean()
 
@@ -38,9 +37,9 @@ class CrossEntropyWithLogitsLoss:
             if not logits.requires_grad:
                 return
 
-            exp = np.exp(shifted)
+            exp = xp.exp(shifted)
 
-            probs = exp / np.sum(
+            probs = exp / xp.sum(
                 exp,
                 axis=-1,
                 keepdims=True,
@@ -48,7 +47,7 @@ class CrossEntropyWithLogitsLoss:
 
             grad = probs
 
-            grad[np.arange(batch), indices] -= 1
+            grad[xp.arange(batch), indices] -= 1
 
             grad /= batch
 

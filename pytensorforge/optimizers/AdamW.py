@@ -1,5 +1,4 @@
-import numpy as np
-
+from pytensorforge.backend import clone, copy_to_numpy, to_device, xp
 from pytensorforge.optimizers.Optimizer import SerialOptimizer
 
 
@@ -34,8 +33,8 @@ class AdamW(SerialOptimizer):
                 continue
 
             if pid not in self.m:
-                self.m[pid] = np.zeros_like(p.data)
-                self.v[pid] = np.zeros_like(p.data)
+                self.m[pid] = xp.zeros_like(p.data)
+                self.v[pid] = xp.zeros_like(p.data)
 
             p.data *= (1 - self.lr * self.weight_decay)
 
@@ -55,7 +54,7 @@ class AdamW(SerialOptimizer):
             p.data -= (
                 self.lr
                 * m_hat
-                / (np.sqrt(v_hat) + self.eps)
+                / (xp.sqrt(v_hat) + self.eps)
             )
 
     def zero_grad(self, params):
@@ -70,8 +69,8 @@ class AdamW(SerialOptimizer):
             "beta2": self.beta2,
             "eps": self.eps,
             "weight_decay": self.weight_decay,
-            "m": {k: v.copy() for k, v in self.m.items()},
-            "v": {k: v.copy() for k, v in self.v.items()},
+            "m": {k: copy_to_numpy(v) for k, v in self.m.items()},
+            "v": {k: copy_to_numpy(v) for k, v in self.v.items()},
         }
 
     def load_state_dict(self, state):
@@ -80,5 +79,5 @@ class AdamW(SerialOptimizer):
         self.beta2 = state["beta2"]
         self.eps = state["eps"]
         self.weight_decay = state["weight_decay"]
-        self.m = {k: v.copy() for k, v in state["m"].items()}
-        self.v = {k: v.copy() for k, v in state["v"].items()}
+        self.m = {k: clone(to_device(v, xp.float32)) for k, v in state["m"].items()}
+        self.v = {k: clone(to_device(v, xp.float32)) for k, v in state["v"].items()}

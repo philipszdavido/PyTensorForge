@@ -7,6 +7,8 @@ import uuid
 
 import numpy as np
 
+from pytensorforge.backend import device_info, get_device
+
 
 def hardware_info():
     return {
@@ -15,7 +17,8 @@ def hardware_info():
         "cpu_count": os.cpu_count(),
         "python": sys.version.split()[0],
         "numpy": np.__version__,
-        "device": "cpu",
+        "device": get_device(),
+        "accelerator": device_info(),
     }
 
 

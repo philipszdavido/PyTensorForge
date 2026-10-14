@@ -1,4 +1,6 @@
 import numpy as np
+
+from pytensorforge.backend import xp
 from pytensorforge.loss import losses
 from pytensorforge.optimizers import optimizers
 from pytensorforge.serialization.checkpoint import Checkpoint
@@ -86,10 +88,10 @@ class Sequential:
 
             if verbose:
                 # if epoch % 20 == 0 and self.layers[1].__class__.__name__:
-                #     print(np.linalg.norm(self.layers[1].attn.Wq.grad))
-                #     print(np.linalg.norm(self.layers[1].attn.Wk.grad))
-                #     print(np.linalg.norm(self.layers[1].attn.Wv.grad))
-                #     print(np.linalg.norm(self.layers[1].attn.Wo.grad))
+                #     print(xp.linalg.norm(self.layers[1].attn.Wq.grad))
+                #     print(xp.linalg.norm(self.layers[1].attn.Wk.grad))
+                #     print(xp.linalg.norm(self.layers[1].attn.Wv.grad))
+                #     print(xp.linalg.norm(self.layers[1].attn.Wo.grad))
 
                 print(f"Epoch {epoch + 1}/{epochs} loss={epoch_loss:.4f}")
 

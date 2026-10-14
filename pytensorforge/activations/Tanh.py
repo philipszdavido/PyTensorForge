@@ -1,5 +1,4 @@
-import numpy as np
-
+from pytensorforge.backend import xp
 from pytensorforge.activations.Activation import Activation
 from pytensorforge.core.Tensor import Tensor
 
@@ -8,7 +7,7 @@ class Tanh(Activation):
 
     @staticmethod
     def forward(x):
-        t = np.tanh(x.data)
+        t = xp.tanh(x.data)
 
         out = Tensor(
             t,

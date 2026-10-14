@@ -1,5 +1,4 @@
-import numpy as np
-
+from pytensorforge.backend import host_rng_sample_mask
 from pytensorforge.core.Tensor import Tensor
 from pytensorforge.neural.Layer import Layer
 
@@ -21,12 +20,7 @@ class Dropout(Layer):
 
         keep = 1 - self.p
 
-        mask = np.random.binomial(
-            1,
-            keep,
-            size=x.shape,
-        ).astype(np.float32)
-
+        mask = host_rng_sample_mask(x.shape, keep)
         mask = Tensor(
             mask / keep,
             requires_grad=False,

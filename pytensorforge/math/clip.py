@@ -1,5 +1,4 @@
-import numpy as np
-
+from pytensorforge.backend import xp
 from pytensorforge.core.Tensor import Tensor
 
 
@@ -8,7 +7,7 @@ class Clip:
     @staticmethod
     def forward(x, min_value, max_value):
 
-        clipped = np.clip(x.data, min_value, max_value)
+        clipped = xp.clip(x.data, min_value, max_value)
 
         out = Tensor(
             clipped,
@@ -25,7 +24,7 @@ class Clip:
             mask = (
                 (x.data >= min_value)
                 & (x.data <= max_value)
-            ).astype(np.float32)
+            ).astype(xp.float32)
 
             x.grad += out.grad * mask
 

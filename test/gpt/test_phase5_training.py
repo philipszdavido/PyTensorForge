@@ -13,6 +13,8 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
+from pytensorforge import backend
+from pytensorforge.backend import copy_to_numpy, to_device, to_numpy
 from pytensorforge.config import CheckpointSpec, DataSpec, EvaluationSpec, ModelSpec, RuntimeSpec, TrainConfig, TrainingSpec
 from pytensorforge.core.Tensor import Tensor, no_grad
 from pytensorforge.data.corpus import CorpusIndex
@@ -76,21 +78,21 @@ def directional_check(fn, inputs, seed=0, eps=1e-2):
 
     out = fn(*inputs)
     (out * Tensor(weight, requires_grad=False)).sum().backward()
-    grads = [t.grad.copy() for t in inputs]
+    grads = [copy_to_numpy(t.grad) for t in inputs]
 
     worst = 0.0
 
     for i, t in enumerate(inputs):
         direction = rng.standard_normal(t.shape).astype(np.float32)
-        base = t.data.copy()
+        base = copy_to_numpy(t.data)
 
         t.data[:] = base + eps * direction
         with no_grad():
-            plus = float(np.sum(fn(*inputs).data.astype(np.float64) * weight))
+            plus = float(np.sum(to_numpy(fn(*inputs).data).astype(np.float64) * weight))
 
         t.data[:] = base - eps * direction
         with no_grad():
-            minus = float(np.sum(fn(*inputs).data.astype(np.float64) * weight))
+            minus = float(np.sum(to_numpy(fn(*inputs).data).astype(np.float64) * weight))
 
         t.data[:] = base
         numeric = (plus - minus) / (2 * eps)
@@ -123,7 +125,8 @@ def test_tensor_core():
     ref = np.random.randn(1000).astype(np.float32) * 4
     out = Tensor(ref).gelu()
     exact = 0.5 * ref.astype(np.float64) * (1 + np.tanh(np.sqrt(2 / np.pi) * (ref + 0.044715 * ref.astype(np.float64) ** 3)))
-    check(out.data.dtype == np.float32 and np.abs(out.data - exact).max() < 1e-5, "gelu value in float32")
+    out_h = to_numpy(out.data)
+    check(out_h.dtype == np.float32 and np.abs(out_h - exact).max() < 1e-5, "gelu value in float32")
     err = directional_check(lambda t: t.gelu(), [Tensor(np.random.randn(6, 7), requires_grad=True)])
     check(err < 1e-2, f"gelu gradient (rel err {err:.2e})")
 
@@ -158,7 +161,7 @@ def test_attention_equivalence():
         x = Tensor(x_data.copy(), requires_grad=True)
         out = layer.call(x, **kwargs)
         (out * Tensor(weight, requires_grad=False)).sum().backward()
-        results.append((out.data.copy(), x.grad.copy(), [p.grad.copy() for p in (layer.Wq, layer.Wk, layer.Wv, layer.Wo)]))
+        results.append((copy_to_numpy(out.data), copy_to_numpy(x.grad), [copy_to_numpy(p.grad) for p in (layer.Wq, layer.Wk, layer.Wv, layer.Wo)]))
 
         for p in (layer.Wq, layer.Wk, layer.Wv, layer.Wo):
             p.grad = None
@@ -198,15 +201,17 @@ def test_rope_properties():
     def score(i, j):
         ci, si = tables.tables([i])
         cj, sj = tables.tables([j])
-        return float(tables.rotate(a[None], ci, si)[0] @ tables.rotate(b[None], cj, sj)[0])
+        a_d, b_d = to_device(a[None]), to_device(b[None])
+        return float(tables.rotate(a_d, ci, si)[0] @ tables.rotate(b_d, cj, sj)[0])
 
     check(abs(score(3, 1) - score(40, 38)) < 1e-4 and abs(score(10, 10) - score(0, 0)) < 1e-4,
           "rope scores depend only on relative position")
 
     c, s = tables.tables(np.arange(10))
-    x = rng.standard_normal((10, 8)).astype(np.float32)
-    check(np.allclose(tables.rotate(tables.rotate(x, c, s), c, s, inverse=True), x, atol=1e-6), "rope inverse")
-    check(np.allclose(np.linalg.norm(tables.rotate(x, c, s), axis=-1), np.linalg.norm(x, axis=-1), atol=1e-5),
+    x_host = rng.standard_normal((10, 8)).astype(np.float32)
+    x = to_device(x_host)
+    check(np.allclose(to_numpy(tables.rotate(tables.rotate(x, c, s), c, s, inverse=True)), x_host, atol=1e-6), "rope inverse")
+    check(np.allclose(np.linalg.norm(to_numpy(tables.rotate(x, c, s)), axis=-1), np.linalg.norm(x_host, axis=-1), atol=1e-5),
           "rope preserves norms")
 
     try:
@@ -318,7 +323,7 @@ def build_trainer(tok, corpus_dir, ckpt, total_steps, workers=1, **training):
 
 
 def flat(model):
-    return np.concatenate([p.data.ravel() for p in model.parameters()])
+    return np.concatenate([to_numpy(p.data).ravel() for p in model.parameters()])
 
 
 def losses(ckpt):
@@ -431,13 +436,13 @@ def test_training_features(tmp, tok, corpus_dir):
 
 def test_precision_units():
     x = np.array([1.0, 1 + 2 ** -8, 1 + 3 * 2 ** -8, -2.5, np.inf, -np.inf, 3.4e38, 0.0], np.float32)
-    got = round_bf16(x)
+    got = to_numpy(round_bf16(x))
     want = np.array([1.0, 1.0, 1 + 2 ** -6, -2.5, np.inf, -np.inf, np.inf, 0.0], np.float32)
     check(np.array_equal(got, want), f"bf16 round-to-nearest-even ({got})")
-    check(np.isnan(round_bf16(np.array([np.nan], np.float32)))[0], "bf16 keeps NaN")
-    check((round_bf16(np.random.randn(1000).astype(np.float32)).view(np.uint32) & 0xFFFF == 0).all(),
+    check(np.isnan(to_numpy(round_bf16(np.array([np.nan], np.float32))))[0], "bf16 keeps NaN")
+    check((to_numpy(round_bf16(np.random.randn(1000).astype(np.float32))).view(np.uint32) & 0xFFFF == 0).all(),
           "bf16 values have 8-bit mantissas")
-    check(round_fp16(np.array([70000.0], np.float32))[0] == np.inf, "fp16 overflow becomes inf")
+    check(to_numpy(round_fp16(np.array([70000.0], np.float32)))[0] == np.inf, "fp16 overflow becomes inf")
 
     a = Tensor(np.random.randn(8, 8), requires_grad=True)
     b = Tensor(np.random.randn(8, 8), requires_grad=True)
@@ -445,7 +450,7 @@ def test_precision_units():
     with autocast("bf16"):
         c = a @ b
 
-    check((c.data.view(np.uint32) & 0xFFFF == 0).all(), "autocast rounds matmul outputs")
+    check((to_numpy(c.data).view(np.uint32) & 0xFFFF == 0).all(), "autocast rounds matmul outputs")
     check(not np.array_equal(c.data, a.data @ b.data), "autocast changes the numerics")
     d = a @ b
     check(np.allclose(d.data, a.data @ b.data), "autocast is scoped")
@@ -483,10 +488,14 @@ def grads_for(model, x, y):
     b, s, v = logits.shape
     loss = CrossEntropyWithLogitsLoss()(logits.reshape(b * s, v), Tensor(y, requires_grad=False).reshape(b * s))
     loss.backward(release=True)
-    return float(loss.data), [p.grad.copy() for p in model.parameters()]
+    return float(loss.data), [copy_to_numpy(p.grad) for p in model.parameters()]
 
 
 def test_activation_checkpointing_memory():
+    if backend.is_mps():
+        print("activation checkpointing memory: skipped (tracemalloc only sees host memory, MLX allocates on the device)")
+        return
+
     cfg = GPTConfig(vocab_size=256, context_length=96, d_model=96, n_layers=6, n_heads=4, ff_dim=384, dropout=0.1)
     np.random.seed(0)
     model = GPTModel(cfg)

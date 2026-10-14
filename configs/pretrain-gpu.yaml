@@ -1,0 +1,33 @@
+model:
+  vocab_size: 8192
+  context_length: 512
+  d_model: 512
+  n_layers: 8
+  n_heads: 8
+  ff_dim: 2048
+  position_encoding: rope
+data:
+  train: [data/pretrain]
+  val_split_fraction: 0.01
+  tokenizer: tokenizer.json
+  sequence_length: 512
+  prefetch: 4
+training:
+  total_steps: 40000
+  micro_batch_size: 16
+  gradient_accumulation_steps: 4
+  learning_rate: 0.0004
+  warmup_steps: 1000
+  decay: cosine
+  precision: fp16
+  activation_checkpointing: false
+checkpoint:
+  directory: checkpoints
+  interval_steps: 1000
+  keep_last: 3
+evaluation:
+  interval_steps: 1000
+  max_batches: 50
+runtime:
+  device: cuda
+  tf32: false

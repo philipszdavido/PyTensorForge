@@ -8,6 +8,7 @@ from typing import List, Optional, Union
 
 import numpy as np
 
+from pytensorforge.backend import bind_thread
 from pytensorforge.inference.config import GenerationConfig
 from pytensorforge.inference.kv_cache import KVCacheManager
 from pytensorforge.inference.sampling import sample_token
@@ -454,6 +455,8 @@ class BatchScheduler:
         self._stop.clear()
 
         def loop():
+            bind_thread()
+
             while not self._stop.is_set():
                 if not self.step():
                     time.sleep(idle_sleep_s)

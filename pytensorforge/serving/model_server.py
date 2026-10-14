@@ -9,18 +9,23 @@ from pytensorforge.models.gpt.context import describe_context
 
 log = logging.getLogger("ptf.server")
 
-SUPPORTED_DEVICES = ("cpu",)
+SUPPORTED_DEVICES = ("cpu", "cuda", "cuda:<index>", "mps")
 
 
 def resolve_device(requested):
+    """Apply the serving device. ``auto`` stays on the CPU: for small models the per-token kernel-launch cost of a
+    GPU outweighs its speed, so the GPU is opt-in with ``cuda`` / ``cuda:<index>`` / ``mps``."""
+    from pytensorforge import backend
+
     requested = (requested or "auto").lower()
 
     if requested in ("auto", "cpu"):
-        return "cpu"
+        return backend.set_device("cpu")
 
-    raise ValueError(
-        f"device '{requested}' is not available: this build's inference engine runs on {SUPPORTED_DEVICES} only"
-    )
+    try:
+        return backend.set_device(requested)
+    except (ValueError, backend.BackendError) as exc:
+        raise ValueError(f"device '{requested}' is not available: {exc}") from exc
 
 
 @dataclass

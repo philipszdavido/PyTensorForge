@@ -1,5 +1,6 @@
 import numpy as np
 
+from pytensorforge.backend import clone, copy_to_numpy, to_device, xp
 from pytensorforge.optimizers.Optimizer import SerialOptimizer
 
 
@@ -34,8 +35,8 @@ class Adam(SerialOptimizer):
             pid = id(p)
 
             if pid not in self.m:
-                self.m[pid] = np.zeros_like(p.data)
-                self.v[pid] = np.zeros_like(p.data)
+                self.m[pid] = xp.zeros_like(p.data)
+                self.v[pid] = xp.zeros_like(p.data)
 
             self.m[pid] = (
                 self.beta1 * self.m[pid]
@@ -53,7 +54,7 @@ class Adam(SerialOptimizer):
             p.data -= (
                 self.lr
                 * m_hat
-                / (np.sqrt(v_hat) + self.eps)
+                / (xp.sqrt(v_hat) + self.eps)
             )
 
     def zero_grad(self, params):
@@ -83,8 +84,8 @@ class Adam(SerialOptimizer):
             "beta2": self.beta2,
             "eps": self.eps,
             "t": self.t,
-            "m": self.m,
-            "v": self.v,
+            "m": {k: copy_to_numpy(v) for k, v in self.m.items()},
+            "v": {k: copy_to_numpy(v) for k, v in self.v.items()},
         }
 
     def load_state_dict(self, state):
@@ -94,5 +95,7 @@ class Adam(SerialOptimizer):
         self.beta2 = float(state["beta2"])
         self.eps = float(state["eps"])
         self.t = int(state["t"])
-        self.m = state["m"].item() if isinstance(state["m"], np.ndarray) else state["m"]
-        self.v = state["v"].item() if isinstance(state["v"], np.ndarray) else state["v"]
+        m = state["m"].item() if isinstance(state["m"], np.ndarray) else state["m"]
+        v = state["v"].item() if isinstance(state["v"], np.ndarray) else state["v"]
+        self.m = {k: clone(to_device(a, xp.float32)) for k, a in m.items()}
+        self.v = {k: clone(to_device(a, xp.float32)) for k, a in v.items()}

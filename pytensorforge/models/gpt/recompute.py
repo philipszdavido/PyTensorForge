@@ -1,5 +1,4 @@
 import numpy as np
-
 from pytensorforge.core.Tensor import Tensor, grad_enabled, no_grad
 
 

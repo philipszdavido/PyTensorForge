@@ -1,6 +1,4 @@
-import numpy as np
-
-
+from pytensorforge.backend import xp
 class RMSProp:
 
     def __init__(self, lr=0.001, beta=0.9, eps=1e-8):
@@ -17,7 +15,7 @@ class RMSProp:
                 continue
 
             if id(p) not in self.cache:
-                self.cache[id(p)] = np.zeros_like(p.data)
+                self.cache[id(p)] = xp.zeros_like(p.data)
 
             self.cache[id(p)] = (
                 self.beta * self.cache[id(p)]
@@ -27,7 +25,7 @@ class RMSProp:
             p.data -= (
                 self.lr
                 * p.grad
-                / (np.sqrt(self.cache[id(p)]) + self.eps)
+                / (xp.sqrt(self.cache[id(p)]) + self.eps)
             )
 
     def zero_grad(self, params):

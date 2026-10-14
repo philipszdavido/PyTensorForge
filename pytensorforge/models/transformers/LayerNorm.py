@@ -1,5 +1,4 @@
-import numpy as np
-
+from pytensorforge.backend import xp
 from pytensorforge.neural.Layer import Layer
 
 

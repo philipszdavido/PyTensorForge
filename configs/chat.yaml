@@ -1,5 +1,3 @@
-# Stage 2: turn the pretrained model into a chat model.
-# The model: section must match pretrain.yaml exactly.
 model:
   vocab_size: 8192
   context_length: 256
@@ -32,3 +30,5 @@ checkpoint:
 evaluation:
   interval_steps: 250
   max_batches: 25
+runtime:
+  device: cuda

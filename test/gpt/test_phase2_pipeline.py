@@ -9,6 +9,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
+from pytensorforge.backend import to_numpy
 from pytensorforge.config import CheckpointSpec, DataSpec, EvaluationSpec, ModelSpec, RuntimeSpec, TrainConfig, TrainingSpec
 from pytensorforge.data.corpus import CorpusIndex
 from pytensorforge.data.shard_builder import build_shards
@@ -162,7 +163,7 @@ def build_trainer(tok, shard_dir, ckpt, prefetch, total_steps, val=False):
 
 
 def flat(model):
-    return np.concatenate([p.data.ravel() for p in model.parameters()])
+    return np.concatenate([to_numpy(p.data).ravel() for p in model.parameters()])
 
 
 def run_resume_test(tmp, tok, shard_dir, prefetch):

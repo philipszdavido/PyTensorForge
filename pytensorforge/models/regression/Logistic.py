@@ -1,5 +1,4 @@
-import numpy as np
-
+from pytensorforge.backend import xp
 from pytensorforge.core.Tensor import Tensor
 from pytensorforge.math.sigmoid import sigmoid
 
@@ -24,7 +23,7 @@ class Logistic:
 
     def forward(self, X):
         self.X = X
-        return sigmoid(np.dot(X, self.W.data) + self.b.data)
+        return sigmoid(xp.dot(X, self.W.data) + self.b.data)
 
     def backward(self, grad_output):
         self.dW.data += grad_output * self.X.data

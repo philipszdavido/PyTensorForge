@@ -1,5 +1,4 @@
-import numpy as np
-
+from pytensorforge.backend import xp
 from pytensorforge.activations.Activation import Activation
 
 class SELU(Activation):
@@ -7,8 +6,8 @@ class SELU(Activation):
     ALPHA = 1.6732632423543772
 
     def __call__(self, x):
-        return self.SCALE * np.where(
+        return self.SCALE * xp.where(
             x > 0,
             x,
-            self.ALPHA * (np.exp(x) - 1),
+            self.ALPHA * (xp.exp(x) - 1),
         )

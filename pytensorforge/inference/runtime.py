@@ -100,7 +100,12 @@ class TextGenerator:
 
 
 def load_model(path, max_batch_size=8, cache_budget_bytes=None, verify=True, prefill_chunk=256, chat_template=None,
-               context_length=None, context_extension=None):
+               context_length=None, context_extension=None, device=None):
+    if device is not None:
+        from pytensorforge import backend
+
+        backend.set_device(device)
+
     with open(os.path.join(path, "config.json")) as f:
         meta = json.load(f)
 

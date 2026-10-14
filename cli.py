@@ -24,7 +24,25 @@ from pytensorforge.training.trainer import Trainer
 NOT_YET_IMPLEMENTED = {}
 
 
+def _apply_device_override(config, args):
+    if getattr(args, "device", None):
+        config.runtime.device = args.device
+
+    if getattr(args, "duty_cycle", None) is not None:
+        config.runtime.duty_cycle = args.duty_cycle
+
+
 def _build_model(config, tokenizer):
+    from pytensorforge import backend
+
+    device = backend.set_device(
+        config.runtime.device,
+        tf32=config.runtime.tf32,
+        memory_limit_gb=config.runtime.memory_limit_gb,
+        cache_limit_mb=config.runtime.cache_limit_mb,
+    )
+    print(f"device: {device} ({backend.device_info()['name']})")
+
     random.seed(config.training.seed)
     np.random.seed(config.training.seed)
 
@@ -140,6 +158,7 @@ def _build_datasets(config, tokenizer):
 
 def cmd_train(args):
     config = TrainConfig.load(args.config)
+    _apply_device_override(config, args)
     tokenizer = load_tokenizer(config.data.tokenizer)
 
     model = _build_model(config, tokenizer)
@@ -169,6 +188,7 @@ def cmd_train(args):
 
 def cmd_resume(args):
     config = TrainConfig.load(args.config)
+    _apply_device_override(config, args)
     tokenizer = load_tokenizer(config.data.tokenizer)
 
     model = _build_model(config, tokenizer)
@@ -188,6 +208,7 @@ def cmd_resume(args):
 
 def cmd_evaluate(args):
     config = TrainConfig.load(args.config)
+    _apply_device_override(config, args)
     tokenizer = load_tokenizer(config.data.tokenizer)
 
     model = _build_model(config, tokenizer)
@@ -355,7 +376,8 @@ def cmd_generate(args):
 
     from pytensorforge.inference.runtime import load_model
 
-    model = load_model(args.model, cache_budget_bytes=args.cache_budget_mb * (1 << 20) if args.cache_budget_mb is not None else None)
+    model = load_model(args.model, cache_budget_bytes=args.cache_budget_mb * (1 << 20) if args.cache_budget_mb is not None else None,
+                       device=args.device)
 
     overrides = {
         "max_new_tokens": args.max_new_tokens,
@@ -488,17 +510,22 @@ def build_parser():
     p_train.add_argument("config")
     p_train.add_argument("--resume", action="store_true")
     p_train.add_argument("--no-save-on-exit", action="store_true")
+    p_train.add_argument("--duty-cycle", type=float, default=None, help="0.1-1.0; below 1 rests between steps so the machine runs cooler and quieter (overrides runtime.duty_cycle)")
+    p_train.add_argument("--device", default=None, help="cpu, cuda, cuda:<index>, mps (Apple GPU) or auto (overrides runtime.device)")
     p_train.set_defaults(func=cmd_train)
 
     p_resume = sub.add_parser("resume")
     p_resume.add_argument("checkpoint")
     p_resume.add_argument("--config", required=True)
     p_resume.add_argument("--no-save-on-exit", action="store_true")
+    p_resume.add_argument("--duty-cycle", type=float, default=None, help="0.1-1.0; below 1 rests between steps so the machine runs cooler and quieter (overrides runtime.duty_cycle)")
+    p_resume.add_argument("--device", default=None, help="cpu, cuda, cuda:<index>, mps (Apple GPU) or auto (overrides runtime.device)")
     p_resume.set_defaults(func=cmd_resume)
 
     p_eval = sub.add_parser("evaluate")
     p_eval.add_argument("checkpoint")
     p_eval.add_argument("--config", required=True)
+    p_eval.add_argument("--device", default=None, help="cpu, cuda, cuda:<index>, mps (Apple GPU) or auto (overrides runtime.device)")
     p_eval.set_defaults(func=cmd_evaluate)
 
     p_inspect = sub.add_parser("inspect")
@@ -537,6 +564,7 @@ def build_parser():
     p_generate = sub.add_parser("generate")
     p_generate.add_argument("model")
     p_generate.add_argument("--prompt", default=None)
+    p_generate.add_argument("--device", default=None, help="cpu, cuda, cuda:<index>, mps (Apple GPU) or auto (overrides runtime.device)")
     p_generate.add_argument("--max-new-tokens", type=int, default=None)
     p_generate.add_argument("--temperature", type=float, default=None)
     p_generate.add_argument("--top-k", type=int, default=None)
@@ -597,7 +625,13 @@ def main():
     parser = build_parser()
     args = parser.parse_args()
 
-    sys.exit(args.func(args))
+    from pytensorforge.backend import BackendError
+
+    try:
+        sys.exit(args.func(args))
+    except BackendError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        sys.exit(2)
 
 
 if __name__ == "__main__":

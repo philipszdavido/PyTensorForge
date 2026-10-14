@@ -1,6 +1,4 @@
-import numpy as np
-
-
+from pytensorforge.backend import xp
 class Adagrad:
 
     def __init__(self, lr=0.01, eps=1e-8):
@@ -16,14 +14,14 @@ class Adagrad:
                 continue
 
             if id(p) not in self.cache:
-                self.cache[id(p)] = np.zeros_like(p.data)
+                self.cache[id(p)] = xp.zeros_like(p.data)
 
             self.cache[id(p)] += p.grad ** 2
 
             p.data -= (
                 self.lr
                 * p.grad
-                / (np.sqrt(self.cache[id(p)]) + self.eps)
+                / (xp.sqrt(self.cache[id(p)]) + self.eps)
             )
 
     def zero_grad(self, params):

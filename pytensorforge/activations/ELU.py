@@ -1,5 +1,4 @@
-import numpy as np
-
+from pytensorforge.backend import xp
 from pytensorforge.activations.Activation import Activation
 
 
@@ -8,4 +7,4 @@ class ELU(Activation):
         self.alpha = alpha
 
     def __call__(self, x):
-        return np.where(x > 0, x, self.alpha * (np.exp(x) - 1))
+        return xp.where(x > 0, x, self.alpha * (xp.exp(x) - 1))

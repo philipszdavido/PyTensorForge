@@ -1,6 +1,4 @@
-import numpy as np
-
-
+from pytensorforge.backend import xp
 class SparseCategoricalCrossEntropy:
 
     def __call__(self, prediction, target):
@@ -10,6 +8,6 @@ class SparseCategoricalCrossEntropy:
         log_probs = prediction.log()
 
         return -log_probs[
-            np.arange(len(target)),
+            xp.arange(len(target)),
             target,
         ].mean()

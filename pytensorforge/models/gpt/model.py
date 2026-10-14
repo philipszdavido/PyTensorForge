@@ -1,5 +1,4 @@
-import numpy as np
-
+from pytensorforge.backend import xp
 from pytensorforge.core.Tensor import Tensor
 from pytensorforge.models.embedding.Embedding import Embedding
 from pytensorforge.models.gpt.block import GPTBlock
@@ -72,7 +71,7 @@ class GPTModel:
 
         if self.pos_emb is not None:
             positions = Tensor(
-                np.tile(np.arange(seq_len, dtype=np.float32), (batch, 1)),
+                xp.tile(xp.arange(seq_len, dtype=xp.float32), (batch, 1)),
                 requires_grad=False,
             )
             x = x + self.pos_emb.call(positions)

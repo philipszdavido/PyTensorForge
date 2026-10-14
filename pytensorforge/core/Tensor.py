@@ -1,7 +1,9 @@
+import math as _math
 import threading
 
-import numpy as np
+import numpy as _host_np
 
+from pytensorforge.backend import clone, get_device, scatter_add, xp, zero_
 _state = threading.local()
 
 
@@ -43,6 +45,45 @@ def _round_operand(x):
 #             [3, 4]], requires_grad=True)
 #
 # print(x.shape)
+
+def _device_index(i):
+    if isinstance(i, Tensor):
+        return i.data.astype(xp.int64)
+
+    if isinstance(i, _host_np.ndarray):
+        return xp.asarray(i)
+
+    return i
+
+
+_SCALAR_TYPES = (int, float, _host_np.integer, _host_np.floating)
+_scalar_cache = {}
+
+
+def _constant(value):
+    """A frozen 0-d Tensor for a Python scalar, cached per device so scalar math never re-uploads the same number."""
+    key = (get_device(), float(value))
+    tensor = _scalar_cache.get(key)
+
+    if tensor is None:
+        tensor = Tensor(float(value), requires_grad=False)
+
+        if len(_scalar_cache) < 512:
+            _scalar_cache[key] = tensor
+
+    return tensor
+
+
+def _wrap(other):
+    if isinstance(other, Tensor):
+        return other
+
+    if isinstance(other, _SCALAR_TYPES):
+        return _constant(other)
+
+    return Tensor(other)
+
+
 
 def unbroadcast(grad, shape):
     while grad.ndim > len(shape):
@@ -86,7 +127,7 @@ class Tensor:
             parents=(),
             op=None,
     ):
-        self.data = np.asarray(data, dtype=np.float32)
+        self.data = xp.asarray(data, dtype=xp.float32)
 
         self._grad = None
 
@@ -105,12 +146,12 @@ class Tensor:
     @property
     def grad(self):
         if self._grad is None:
-            self._grad = np.zeros_like(self.data)
+            self._grad = xp.zeros_like(self.data)
         return self._grad
 
     @grad.setter
     def grad(self, value):
-        self._grad = value
+        self._grad = None if value is None else xp.asarray(value, dtype=xp.float32)
 
     @property
     def _backward(self):
@@ -126,7 +167,7 @@ class Tensor:
 
     def zero_grad(self):
         if self._grad is not None:
-            self._grad.fill(0)
+            zero_(self._grad)
 
     def __len__(self):
         return self.data.shape[0]
@@ -139,14 +180,10 @@ class Tensor:
 
     def __getitem__(self, idx):
 
-        if isinstance(idx, Tensor):
-            idx = idx.data.astype(np.int64)
-
-        elif isinstance(idx, tuple):
-            idx = tuple(
-                i.data.astype(np.int64) if isinstance(i, Tensor) else i
-                for i in idx
-            )
+        if isinstance(idx, tuple):
+            idx = tuple(_device_index(i) for i in idx)
+        else:
+            idx = _device_index(idx)
 
         out = Tensor(
             self.data[idx],
@@ -159,11 +196,7 @@ class Tensor:
             if not self.requires_grad:
                 return
 
-            np.add.at(
-                self.grad,
-                idx,
-                out.grad,
-            )
+            scatter_add(self.grad, idx, out.grad)
 
         out._backward = _backward
 
@@ -172,7 +205,7 @@ class Tensor:
     @staticmethod
     def zeros(shape, requires_grad=False):
         return Tensor(
-            np.zeros(shape, dtype=np.float32),
+            xp.zeros(shape, dtype=xp.float32),
             requires_grad=requires_grad,
         )
 
@@ -185,8 +218,7 @@ class Tensor:
         return f"Tensor(data={self.data}, requires_grad={self.requires_grad})"
 
     def __add__(self, other):
-        if not isinstance(other, Tensor):
-            other = Tensor(other)
+        other = _wrap(other)
 
         out = Tensor(
             self.data + other.data,
@@ -208,8 +240,7 @@ class Tensor:
 
     def __sub__(self, other):
 
-        if not isinstance(other, Tensor):
-            other = Tensor(other)
+        other = _wrap(other)
 
         out = Tensor(
             self.data - other.data,
@@ -255,8 +286,7 @@ class Tensor:
         return out
 
     def __mul__(self, other):
-        if not isinstance(other, Tensor):
-            other = Tensor(other)
+        other = _wrap(other)
 
         out = Tensor(
             self.data * other.data,
@@ -302,31 +332,46 @@ class Tensor:
 
     def __matmul__(self, other):
 
-        if not isinstance(other, Tensor):
-            other = Tensor(other)
+        other = _wrap(other)
 
         policy = matmul_policy()
-        a = self.data if policy is None else policy(self.data)
-        b = other.data if policy is None else policy(other.data)
-        result = a @ b
+        native = None if policy is None else getattr(policy, "native_dtype", None)
+
+        if native is not None:
+            # real reduced-precision product (fp16 tensor cores on the GPU); fp32 master data is untouched
+            a = self.data.astype(native)
+            b = other.data.astype(native)
+            result = (a @ b).astype(xp.float32)
+        else:
+            a = self.data if policy is None else policy(self.data)
+            b = other.data if policy is None else policy(other.data)
+            result = a @ b
+
+            if policy is not None:
+                result = policy(result)
 
         out = Tensor(
-            result if policy is None else policy(result),
+            result,
             requires_grad=self.requires_grad or other.requires_grad,
             parents=(self, other),
             op="MatMul",
         )
 
         def _backward():
-            g = out.grad if policy is None else policy(out.grad)
+            if native is not None:
+                g = out.grad.astype(native)
+            else:
+                g = out.grad if policy is None else policy(out.grad)
 
             if self.requires_grad:
-                grad = np.matmul(
+                grad = xp.matmul(
                     g,
-                    np.swapaxes(b, -1, -2),
+                    xp.swapaxes(b, -1, -2),
                 )
 
-                if policy is not None:
+                if native is not None:
+                    grad = grad.astype(xp.float32)
+                elif policy is not None:
                     grad = policy(grad)
 
                 self.grad += Tensor.unbroadcast(
@@ -335,12 +380,14 @@ class Tensor:
                 )
 
             if other.requires_grad:
-                grad = np.matmul(
-                    np.swapaxes(a, -1, -2),
+                grad = xp.matmul(
+                    xp.swapaxes(a, -1, -2),
                     g,
                 )
 
-                if policy is not None:
+                if native is not None:
+                    grad = grad.astype(xp.float32)
+                elif policy is not None:
                     grad = policy(grad)
 
                 other.grad += Tensor.unbroadcast(
@@ -364,8 +411,7 @@ class Tensor:
         return grad
 
     def __div__(self, other):
-        if not isinstance(other, Tensor):
-            other = Tensor(other)
+        other = _wrap(other)
 
         out = Tensor(
             self.data / other.data,
@@ -434,7 +480,7 @@ class Tensor:
             if self.requires_grad:
                 self.grad += (
                         out.grad
-                        * np.log(other)
+                        * _math.log(other)
                         * (other ** self.data)
                 )
 
@@ -445,7 +491,7 @@ class Tensor:
     def sqrt(self):
 
         out = Tensor(
-            np.sqrt(self.data),
+            xp.sqrt(self.data),
             requires_grad=self.requires_grad,
             parents=(self,),
             op="Sqrt",
@@ -455,7 +501,7 @@ class Tensor:
             if not self.requires_grad:
                 return
 
-            self.grad += out.grad * (0.5 / np.sqrt(self.data))
+            self.grad += out.grad * (0.5 / xp.sqrt(self.data))
 
         out._backward = _backward
 
@@ -466,14 +512,10 @@ class Tensor:
         if isinstance(mask, Tensor):
             mask = mask.data
 
-        mask = np.broadcast_to(mask, self.data.shape)
-
-        out_data = self.data.copy()
-
-        out_data[mask] = value
+        mask = xp.broadcast_to(xp.asarray(mask), self.data.shape)
 
         out = Tensor(
-            out_data,
+            xp.where(mask, value, self.data),
             requires_grad=self.requires_grad,
             parents=(self,),
             op="MaskedFill",
@@ -484,11 +526,7 @@ class Tensor:
             if not self.requires_grad:
                 return
 
-            grad = out.grad.copy()
-
-            grad[mask] = 0
-
-            self.grad += grad
+            self.grad += xp.where(mask, 0.0, out.grad)
 
         out._backward = _backward
 
@@ -514,7 +552,7 @@ class Tensor:
 
         x2 = x * x
 
-        tanh_inner = np.tanh(c * x * (1.0 + 0.044715 * x2))
+        tanh_inner = xp.tanh(c * x * (1.0 + 0.044715 * x2))
 
         out = Tensor(
             0.5 * x * (1.0 + tanh_inner),
@@ -539,7 +577,7 @@ class Tensor:
 
     def sin(self):
         out = Tensor(
-            np.sin(self.data),
+            xp.sin(self.data),
             requires_grad=self.requires_grad,
             parents=(self, ),
             op="Sin",
@@ -548,7 +586,7 @@ class Tensor:
         def _backward():
             # out = sin(self)
             # 𝜹out/𝜹self = cos(self)
-            self.grad += out.grad * np.cos(self.data)
+            self.grad += out.grad * xp.cos(self.data)
         out._backward = _backward
         return out
 
@@ -561,7 +599,7 @@ class Tensor:
     #     )
     #
     #     def _backward():
-    #         self.grad += out.grad * np.ones_like(self.data) / self.data.size
+    #         self.grad += out.grad * xp.ones_like(self.data) / self.data.size
     #     out._backward = _backward
     #     return out
 
@@ -589,9 +627,9 @@ class Tensor:
 
                 if not keepdims:
                     for ax in sorted([a if a >= 0 else a + self.data.ndim for a in axes]):
-                        grad = np.expand_dims(grad, axis=ax)
+                        grad = xp.expand_dims(grad, axis=ax)
 
-            grad = np.broadcast_to(grad, self.data.shape)
+            grad = xp.broadcast_to(grad, self.data.shape)
 
             self.grad += grad / count
 
@@ -609,7 +647,7 @@ class Tensor:
     #
     #     def _backward():
     #         if self.requires_grad:
-    #             self.grad += out.grad * np.ones_like(self.data)
+    #             self.grad += out.grad * xp.ones_like(self.data)
     #
     #     out._backward = _backward
     #     return out
@@ -631,9 +669,9 @@ class Tensor:
             if axis is not None and not keepdims:
                 axes = axis if isinstance(axis, tuple) else (axis,)
                 for ax in sorted([a if a >= 0 else a + self.data.ndim for a in axes]):
-                    grad = np.expand_dims(grad, axis=ax)
+                    grad = xp.expand_dims(grad, axis=ax)
 
-            grad = np.broadcast_to(grad, self.data.shape)
+            grad = xp.broadcast_to(grad, self.data.shape)
 
             self.grad += grad
 
@@ -642,8 +680,7 @@ class Tensor:
         return out
 
     def __truediv__(self, other):
-        if not isinstance(other, Tensor):
-            other = Tensor(other)
+        other = _wrap(other)
 
         out = Tensor(
             self.data / other.data,
@@ -677,7 +714,7 @@ class Tensor:
         return out
 
     def __rtruediv__(self, other):
-        return Tensor(other) / self
+        return _wrap(other) / self
 
     def __radd__(self, other):
         return self + other
@@ -686,13 +723,13 @@ class Tensor:
         return self * other
 
     def __rsub__(self, other):
-        return Tensor(other) - self
+        return _wrap(other) - self
 
     def relu(self):
         from pytensorforge.activations.ReLU import ReLU
         return ReLU.forward(self)
         # out = Tensor(
-        #     np.maximum(0, self.data),
+        #     xp.maximum(0, self.data),
         #     requires_grad=self.requires_grad,
         #     parents=(self,),
         #     op="ReLU",
@@ -737,7 +774,7 @@ class Tensor:
 
     def argmax(self, axis=None):
         return Tensor(
-            np.argmax(self.data, axis=axis),
+            xp.argmax(self.data, axis=axis),
             requires_grad=False,
         )
 
@@ -747,7 +784,7 @@ class Tensor:
     def transpose(self, *axes):
 
         out = Tensor(
-            np.transpose(self.data, axes),
+            xp.transpose(self.data, axes),
             requires_grad=self.requires_grad,
             parents=(self,),
             op="Transpose",
@@ -757,9 +794,9 @@ class Tensor:
             if not self.requires_grad:
                 return
 
-            inverse = np.argsort(axes)
+            inverse = tuple(int(i) for i in _host_np.argsort(axes))
 
-            self.grad += np.transpose(
+            self.grad += xp.transpose(
                 out.grad,
                 inverse,
             )
@@ -793,7 +830,7 @@ class Tensor:
     def squeeze(self, axis=None):
 
         out = Tensor(
-            np.squeeze(self.data, axis),
+            xp.squeeze(self.data, axis),
             requires_grad=self.requires_grad,
             parents=(self,),
             op="Squeeze",
@@ -812,7 +849,7 @@ class Tensor:
     def unsqueeze(self, axis):
 
         out = Tensor(
-            np.expand_dims(self.data, axis),
+            xp.expand_dims(self.data, axis),
             requires_grad=self.requires_grad,
             parents=(self,),
             op="Unsqueeze",
@@ -820,7 +857,7 @@ class Tensor:
 
         def _backward():
             if self.requires_grad:
-                self.grad += np.squeeze(
+                self.grad += xp.squeeze(
                     out.grad,
                     axis=axis,
                 )
@@ -832,7 +869,7 @@ class Tensor:
     def backward(self, grad=None, release=False):
         topo = _topological_order(self)
 
-        self.grad = np.ones_like(self.data) if grad is None else np.asarray(grad, dtype=np.float32).copy()
+        self.grad = xp.ones_like(self.data) if grad is None else clone(xp.asarray(grad, dtype=xp.float32))
 
         for t in reversed(topo):
             t._bw()
@@ -854,13 +891,13 @@ class Tensor:
             start, stop = 0, start
 
         return cls(
-            np.arange(start, stop, step, dtype=np.float32),
+            xp.arange(start, stop, step, dtype=xp.float32),
             requires_grad=requires_grad,
         )
 
     @classmethod
     def random(cls, shape, requires_grad=False):
         return cls(
-            np.random.random(shape).astype(np.float32),
+            _host_np.random.random(shape).astype(_host_np.float32),
             requires_grad=requires_grad,
         )

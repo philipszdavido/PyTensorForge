@@ -1,30 +1,64 @@
 import math
 
-import numpy as np
+import numpy as _host_np
 
+from pytensorforge.backend import is_cuda, is_mps, xp
 from pytensorforge.core.Tensor import set_matmul_policy
+
+_u32 = _host_np.uint32
 
 PRECISIONS = ("fp32", "bf16", "fp16")
 LOSS_SCALING = ("auto", "dynamic", "none")
 
 
 def round_bf16(x):
-    x = np.ascontiguousarray(x, dtype=np.float32)
-    bits = x.view(np.uint32)
-    finite = (bits & np.uint32(0x7F800000)) != np.uint32(0x7F800000)
-    lsb = (bits >> np.uint32(16)) & np.uint32(1)
-    rounded = (bits + np.uint32(0x7FFF) + lsb) & np.uint32(0xFFFF0000)
-    is_nan = ~finite & ((bits & np.uint32(0x007FFFFF)) != np.uint32(0))
-    special = (bits & np.uint32(0xFFFF0000)) | np.where(is_nan, np.uint32(0x00400000), np.uint32(0))
-    return np.where(finite, rounded, special).astype(np.uint32).view(np.float32)
+    if is_mps():
+        return xp.asarray(x, dtype=xp.float32).astype(xp.bfloat16).astype(xp.float32)   # native round-to-nearest-even
+
+    x = xp.ascontiguousarray(xp.asarray(x, dtype=xp.float32))
+    bits = x.view(_u32)
+    finite = (bits & _u32(0x7F800000)) != _u32(0x7F800000)
+    lsb = (bits >> _u32(16)) & _u32(1)
+    rounded = (bits + _u32(0x7FFF) + lsb) & _u32(0xFFFF0000)
+    is_nan = ~finite & ((bits & _u32(0x007FFFFF)) != _u32(0))
+    special = (bits & _u32(0xFFFF0000)) | (is_nan.astype(_u32) * _u32(0x00400000))
+    return xp.where(finite, rounded, special).astype(_u32).view(xp.float32)
 
 
 def round_fp16(x):
-    with np.errstate(over="ignore"):
-        return np.asarray(x, dtype=np.float32).astype(np.float16).astype(np.float32)
+    with xp.errstate(over="ignore"):
+        return xp.asarray(x, dtype=xp.float32).astype(xp.float16).astype(xp.float32)
 
 
 ROUNDERS = {"bf16": round_bf16, "fp16": round_fp16}
+
+
+class MatmulPolicy:
+    """Rounds matmul operands/results to a reduced precision. ``native_dtype`` is set when the device can
+    run the product in that dtype directly (fp16 on a GPU), which is what makes mixed precision fast."""
+
+    def __init__(self, precision, rounder, native_dtype=None):
+        self.precision = precision
+        self.rounder = rounder
+        self.native_dtype = native_dtype
+
+    def __call__(self, x):
+        return self.rounder(x)
+
+
+def make_policy(precision):
+    if precision == "fp32":
+        return None
+
+    # fp16 products run natively on CUDA and on the Apple GPU; bf16 runs natively only through MLX
+    native = None
+
+    if precision == "fp16" and (is_cuda() or is_mps()):
+        native = xp.float16
+    elif precision == "bf16" and is_mps():
+        native = xp.bfloat16
+
+    return MatmulPolicy(precision, ROUNDERS[precision], native)
 
 
 class autocast:
@@ -37,7 +71,7 @@ class autocast:
         self._previous = None
 
     def __enter__(self):
-        self._previous = set_matmul_policy(ROUNDERS.get(self.precision))
+        self._previous = set_matmul_policy(make_policy(self.precision))
         return self
 
     def __exit__(self, *exc):
@@ -74,11 +108,16 @@ class GradScaler:
         return self.scale if self.enabled else 1.0
 
     def grads_finite(self, params):
-        for p in params:
-            if p.requires_grad and p._grad is not None and not np.isfinite(p._grad).all():
-                return False
+        flags = [
+            xp.isfinite(p._grad).all()
+            for p in params
+            if p.requires_grad and p._grad is not None
+        ]
 
-        return True
+        if not flags:
+            return True
+
+        return bool(xp.stack(flags).all())
 
     def unscale_and_check(self, params):
         if not self.enabled:

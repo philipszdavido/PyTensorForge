@@ -1,5 +1,4 @@
-import numpy as np
-
+from pytensorforge.backend import xp
 class SGDMomentum:
 
     def __init__(self, lr=0.01, momentum=0.9):
@@ -15,7 +14,7 @@ class SGDMomentum:
                 continue
 
             if id(p) not in self.velocity:
-                self.velocity[id(p)] = np.zeros_like(p.data)
+                self.velocity[id(p)] = xp.zeros_like(p.data)
 
             v = self.velocity[id(p)]
 

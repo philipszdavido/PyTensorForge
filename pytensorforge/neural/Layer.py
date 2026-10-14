@@ -1,3 +1,4 @@
+from pytensorforge.backend import assign, copy_to_numpy
 from pytensorforge.neural.Parameter import Parameter
 from pytensorforge.initializers import initializer_fns
 
@@ -54,7 +55,7 @@ class Layer:
         state = {}
 
         for p in self.parameters():
-            state[p.name] = p.data.copy()
+            state[p.name] = copy_to_numpy(p.data)
 
         return state
 
@@ -66,7 +67,7 @@ class Layer:
         for p in self.parameters():
 
             if p.name in state:
-                p.data[:] = state[p.name]
+                assign(p.data, state[p.name])
 
     def compute_output_shape(self, input_shape):
         raise NotImplementedError

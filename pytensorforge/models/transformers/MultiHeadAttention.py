@@ -1,3 +1,4 @@
+from pytensorforge.backend import assign, copy_to_numpy, xp
 from pytensorforge.core.Tensor import Tensor
 from pytensorforge.neural.Layer import Layer
 
@@ -91,8 +92,8 @@ class MultiHeadAttention(Layer):
 
         # scores = scores / math.sqrt(self.head_dim)
         scores = scores / Tensor(self.head_dim).sqrt()
-        # mask = np.triu(
-        #     np.ones((seq, seq)),
+        # mask = xp.triu(
+        #     xp.ones((seq, seq)),
         #     k=1
         # ).astype(bool)
 
@@ -117,14 +118,14 @@ class MultiHeadAttention(Layer):
 
     def state_dict(self):
         return {
-            "Wq": self.Wq.data.copy(),
-            "Wk": self.Wk.data.copy(),
-            "Wv": self.Wv.data.copy(),
-            "Wo": self.Wo.data.copy(),
+            "Wq": copy_to_numpy(self.Wq.data),
+            "Wk": copy_to_numpy(self.Wk.data),
+            "Wv": copy_to_numpy(self.Wv.data),
+            "Wo": copy_to_numpy(self.Wo.data),
         }
 
     def load_state_dict(self, state):
-        self.Wq.data[:] = state["Wq"]
-        self.Wk.data[:] = state["Wk"]
-        self.Wv.data[:] = state["Wv"]
-        self.Wo.data[:] = state["Wo"]
+        assign(self.Wq.data, state["Wq"])
+        assign(self.Wk.data, state["Wk"])
+        assign(self.Wv.data, state["Wv"])
+        assign(self.Wo.data, state["Wo"])

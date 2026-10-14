@@ -1,8 +1,8 @@
 import threading
 
-import numpy as np
+import numpy as _host_np
 
-
+from pytensorforge.backend import get_device, xp
 ROPE_SCALING = ("none", "linear", "ntk")
 
 
@@ -31,31 +31,55 @@ class RotaryTables:
         self.factor = float(factor)
         self.theta = scaled_theta(theta, head_dim, scaling, factor)
         self.max_positions = int(max_positions)
+        self._on_device = {}
 
-        inv_freq = self.theta ** (-np.arange(0, self.half, dtype=np.float64) / self.half)
-        positions = np.arange(self.max_positions, dtype=np.float64)
+        inv_freq = self.theta ** (-_host_np.arange(0, self.half, dtype=_host_np.float64) / self.half)
+        positions = _host_np.arange(self.max_positions, dtype=_host_np.float64)
 
         if scaling == "linear":
             positions = positions / self.factor
 
         angles = positions[:, None] * inv_freq[None, :]
 
-        self.cos = np.cos(angles).astype(np.float32)
-        self.sin = np.sin(angles).astype(np.float32)
+        self.cos = _host_np.cos(angles).astype(_host_np.float32)
+        self.sin = _host_np.sin(angles).astype(_host_np.float32)
+
+    def _device_tables(self):
+        key = get_device()
+        cached = self._on_device.get(key)
+
+        if cached is None:
+            cached = (xp.asarray(self.cos), xp.asarray(self.sin))
+            self._on_device[key] = cached
+
+        return cached
 
     def tables(self, positions):
-        positions = np.asarray(positions, dtype=np.int64)
+        """cos/sin rows for explicit positions (host array-like), as arrays on the active device."""
+        positions = _host_np.asarray(positions, dtype=_host_np.int64)
 
         if positions.size and (positions.min() < 0 or positions.max() >= self.max_positions):
             raise ValueError(f"position outside the rotary table (0..{self.max_positions - 1})")
 
-        return self.cos[positions], self.sin[positions]
+        cos, sin = self._device_tables()
+        idx = xp.asarray(positions)
+
+        return cos[idx], sin[idx]
+
+    def slice(self, start, stop):
+        """cos/sin rows for the contiguous positions start..stop-1 (no host-to-device copy)."""
+        if start < 0 or stop > self.max_positions or stop < start:
+            raise ValueError(f"position outside the rotary table (0..{self.max_positions - 1})")
+
+        cos, sin = self._device_tables()
+
+        return cos[start:stop], sin[start:stop]
 
     def rotate(self, x, cos, sin, inverse=False):
         h = self.half
         x1 = x[..., :h]
         x2 = x[..., h:]
-        out = np.empty_like(x)
+        out = xp.empty_like(x)
 
         if inverse:
             out[..., :h] = x1 * cos + x2 * sin

@@ -1,5 +1,4 @@
-import numpy as np
-
+from pytensorforge.backend import xp
 from pytensorforge.core.Tensor import Tensor
 
 
@@ -17,12 +16,12 @@ class Linear:
         self.X = None
 
     def normalize(self, X):
-        norm = np.linalg.norm(X)
+        norm = xp.linalg.norm(X)
         return X if norm == 0 else X / norm
 
     def forward(self, X):
         self.X = X
-        return np.dot(X, self.W.data) + self.b.data
+        return xp.dot(X, self.W.data) + self.b.data
 
     def grads(self):
         return [self.dW, self.db]

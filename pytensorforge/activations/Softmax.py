@@ -1,5 +1,4 @@
-import numpy as np
-
+from pytensorforge.backend import xp
 from pytensorforge.core.Tensor import Tensor
 
 
@@ -8,11 +7,11 @@ from pytensorforge.core.Tensor import Tensor
 #     @staticmethod
 #     def forward(x):
 #
-#         shifted = x.data - np.max(x.data, axis=-1, keepdims=True)
+#         shifted = x.data - xp.max(x.data, axis=-1, keepdims=True)
 #
-#         exp = np.exp(shifted)
+#         exp = xp.exp(shifted)
 #
-#         probs = exp / np.sum(exp, axis=-1, keepdims=True)
+#         probs = exp / xp.sum(exp, axis=-1, keepdims=True)
 #
 #         out = Tensor(
 #             probs,
@@ -26,12 +25,12 @@ from pytensorforge.core.Tensor import Tensor
 #             if not x.requires_grad:
 #                 return
 #
-#             grad = np.empty_like(probs)
+#             grad = xp.empty_like(probs)
 #
 #             for i in range(len(probs)):
 #                 p = probs[i].reshape(-1, 1)
 #
-#                 jacobian = np.diagflat(p) - p @ p.T
+#                 jacobian = xp.diagflat(p) - p @ p.T
 #
 #                 grad[i] = jacobian @ out.grad[i]
 #
@@ -52,11 +51,11 @@ class Softmax(Activation):
     @staticmethod
     def forward(x, axis=-1):
 
-        shifted = x.data - np.max(x.data, axis=axis, keepdims=True)
+        shifted = x.data - xp.max(x.data, axis=axis, keepdims=True)
 
-        exp = np.exp(shifted)
+        exp = xp.exp(shifted)
 
-        probs = exp / np.sum(exp, axis=axis, keepdims=True)
+        probs = exp / xp.sum(exp, axis=axis, keepdims=True)
 
         out = Tensor(
             probs,
@@ -72,7 +71,7 @@ class Softmax(Activation):
 
             grad = out.grad
 
-            dot = np.sum(grad * probs, axis=axis, keepdims=True)
+            dot = xp.sum(grad * probs, axis=axis, keepdims=True)
 
             x.grad += probs * (grad - dot)
 

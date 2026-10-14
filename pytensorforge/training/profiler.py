@@ -1,6 +1,8 @@
 import time
 from collections import defaultdict
 
+from pytensorforge.backend import is_gpu, synchronize
+
 
 class Profiler:
 
@@ -35,4 +37,7 @@ class _Section:
         self.start = time.perf_counter()
 
     def __exit__(self, *exc):
+        if is_gpu():
+            synchronize()  # GPU work is asynchronous; wait so the time lands in the right section
+
         self.profiler.add(self.name, time.perf_counter() - self.start)

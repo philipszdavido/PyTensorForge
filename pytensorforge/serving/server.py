@@ -11,9 +11,12 @@ from pytensorforge.serving.security import is_loopback
 
 log = logging.getLogger("ptf.server")
 
-DEFAULT_UI_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-                              "web", "dist")
+# DEFAULT_UI_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+#                               "web", "dist")
 
+DEFAULT_UI_DIR = os.path.abspath(
+    os.path.join(os.getcwd(), "web", "dist")
+)
 
 class InsecureConfiguration(ValueError):
     pass

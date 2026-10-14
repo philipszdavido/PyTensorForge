@@ -81,8 +81,12 @@ class EvaluationSpec:
 
 @dataclass
 class RuntimeSpec:
-    device: str = "cpu"
+    device: str = "cpu"          # cpu, cuda, cuda:<index>, mps (Apple GPU) or auto (CUDA, else Apple GPU, else CPU)
     seed: int = 1337
+    memory_limit_gb: Optional[float] = None   # Apple GPU: cap on MLX memory (default: half of the Mac's RAM)
+    cache_limit_mb: Optional[float] = None    # Apple GPU: freed memory MLX may keep cached (default 256)
+    duty_cycle: float = 1.0                   # 0.1-1.0: fraction of time spent computing; <1 rests between steps to run cooler/quieter
+    tf32: bool = False           # GPU only: allow TensorFloat-32 matmuls (faster fp32 on Ampere+)
 
 
 @dataclass

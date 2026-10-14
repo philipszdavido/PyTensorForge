@@ -1,5 +1,4 @@
-import numpy as np
-
+from pytensorforge.backend import scatter_add_rows, xp
 from pytensorforge.neural.Layer import Layer
 from pytensorforge.core.Tensor import Tensor
 
@@ -31,7 +30,7 @@ class Embedding(Layer):
 
     def call(self, x):
 
-        indices = x.data.astype(np.int64)
+        indices = x.data.astype(xp.int64)
 
         out = Tensor(
             self.weight.data[indices],
@@ -45,10 +44,10 @@ class Embedding(Layer):
             if not self.weight.requires_grad:
                 return
 
-            np.add.at(
+            scatter_add_rows(
                 self.weight.grad,
-                indices,
-                out.grad,
+                indices.reshape(-1),
+                out.grad.reshape(-1, self.embedding_dim),
             )
 
         out._backward = _backward

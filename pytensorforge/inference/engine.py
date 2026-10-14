@@ -1,33 +1,32 @@
-import numpy as np
+import numpy as _host_np
 
+from pytensorforge.backend import exp_, materialize, to_device, to_numpy, xp
 from pytensorforge.inference.kv_cache import KVCache
 
 
 def _layer_norm(x, gamma, beta, eps):
     mean = x.mean(axis=-1, keepdims=True)
     var = ((x - mean) ** 2).mean(axis=-1, keepdims=True)
-    return gamma * ((x - mean) / np.sqrt(var + eps)) + beta
+    return gamma * ((x - mean) / xp.sqrt(var + eps)) + beta
 
 
 def _softmax(x):
-    x = x - x.max(axis=-1, keepdims=True)
-    np.exp(x, out=x)
-    x /= x.sum(axis=-1, keepdims=True)
-    return x
+    x = exp_(x - x.max(axis=-1, keepdims=True))
+    return x / x.sum(axis=-1, keepdims=True)
 
 
 def _gelu(x):
-    return 0.5 * x * (1.0 + np.tanh(0.7978845608028654 * (x + 0.044715 * (x * x * x))))
+    return 0.5 * x * (1.0 + xp.tanh(0.7978845608028654 * (x + 0.044715 * (x * x * x))))
 
 
 def _sigmoid(x):
-    return 1.0 / (1.0 + np.exp(-x))
+    return 1.0 / (1.0 + xp.exp(-x))
 
 
 ACTIVATIONS = {
     "gelu": _gelu,
-    "relu": lambda x: np.maximum(0, x),
-    "tanh": np.tanh,
+    "relu": lambda x: xp.maximum(0, x),
+    "tanh": lambda x: xp.tanh(x),
     "sigmoid": _sigmoid,
 }
 
@@ -35,11 +34,11 @@ ACTIVATIONS = {
 class _Layer:
 
     def __init__(self, w, prefix):
-        g = lambda name: np.ascontiguousarray(w[f"{prefix}.{name}"], dtype=np.float32)
+        g = lambda name: xp.ascontiguousarray(to_device(w[f"{prefix}.{name}"], xp.float32))
 
         self.ln1_g = g("norm1.gamma")
         self.ln1_b = g("norm1.beta")
-        self.wqkv = np.concatenate([g("attn.Wq"), g("attn.Wk"), g("attn.Wv")], axis=1)
+        self.wqkv = xp.concatenate([g("attn.Wq"), g("attn.Wk"), g("attn.Wv")], axis=1)
         self.wo = g("attn.Wo")
         self.ln2_g = g("norm2.gamma")
         self.ln2_b = g("norm2.beta")
@@ -62,10 +61,10 @@ class InferenceModel:
         self.head_dim = config.d_model // config.n_heads
         self.context_length = config.context_length
         self.eps = config.norm_eps
-        self.scale = np.float32(1.0 / np.sqrt(self.head_dim))
+        self.scale = _host_np.float32(1.0 / _host_np.sqrt(self.head_dim))
         self.act = ACTIVATIONS[config.activation]
 
-        f32 = lambda name: np.ascontiguousarray(weights[name], dtype=np.float32)
+        f32 = lambda name: xp.ascontiguousarray(to_device(weights[name], xp.float32))
 
         self.tok_emb = f32("token_emb.embedding")
         self.rope = None
@@ -126,8 +125,8 @@ class InferenceModel:
         return self.act(h @ layer.fc1_k + layer.fc1_b) @ layer.fc2_k + layer.fc2_b
 
     def forward_chunk(self, token_ids, cache, want_logits=True):
-        ids = np.asarray(token_ids, dtype=np.int64)
-        T = ids.size
+        ids = to_device(token_ids, xp.int64)
+        T = int(ids.size)
         p0 = cache.length
 
         if T == 0:
@@ -142,11 +141,11 @@ class InferenceModel:
         if self.pos_emb is not None:
             x = x + self.pos_emb[p0:L]
         else:
-            cos, sin = self.rope.tables(np.arange(p0, L))
+            cos, sin = self.rope.slice(p0, L)
 
         mask = None
         if T > 1:
-            mask = np.arange(L)[None, :] > (p0 + np.arange(T))[:, None]
+            mask = xp.arange(L)[None, :] > (p0 + xp.arange(T))[:, None]
 
         H, hd, d = self.n_heads, self.head_dim, self.d_model
 
@@ -167,7 +166,7 @@ class InferenceModel:
             scores = (q @ cache.k[li, :, :L].transpose(0, 2, 1)) * self.scale
 
             if mask is not None:
-                scores[:, mask] = -1e9
+                scores = xp.where(mask[None], _host_np.float32(-1e9), scores)
 
             ctx = _softmax(scores) @ cache.v[li, :, :L]
             x = x + ctx.transpose(1, 0, 2).reshape(T, d) @ layer.wo
@@ -178,10 +177,10 @@ class InferenceModel:
         if not want_logits:
             return None
 
-        return self._logits(x[-1:])[0]
+        return to_numpy(self._logits(x[-1:])[0])
 
     def prefill(self, token_ids, cache, chunk_size=256):
-        ids = np.asarray(token_ids, dtype=np.int64)
+        ids = _host_np.asarray(token_ids, dtype=_host_np.int64)
         logits = None
 
         for start in range(0, ids.size, chunk_size):
@@ -192,8 +191,8 @@ class InferenceModel:
 
     def decode_batch(self, token_ids, caches):
         B = len(caches)
-        ids = np.asarray(token_ids, dtype=np.int64)
-        pos = np.array([c.length for c in caches], dtype=np.int64)
+        ids = to_device(token_ids, xp.int64)
+        pos = _host_np.array([c.length for c in caches], dtype=_host_np.int64)
 
         for c in caches:
             if c.length + 1 > c.capacity:
@@ -202,7 +201,7 @@ class InferenceModel:
         x = self.tok_emb[ids]
 
         if self.pos_emb is not None:
-            x = x + self.pos_emb[pos]
+            x = x + self.pos_emb[to_device(pos)]
         else:
             cos, sin = self.rope.tables(pos)
             q_cos, q_sin = cos[:, None, None, :], sin[:, None, None, :]
@@ -222,7 +221,7 @@ class InferenceModel:
                 q = self.rope.rotate(q, q_cos, q_sin)
                 k = self.rope.rotate(k, k_cos, k_sin)
 
-            ctx = np.empty((B, d), dtype=np.float32)
+            ctx = xp.empty((B, d), dtype=xp.float32)
 
             for b, c in enumerate(caches):
                 n = int(pos[b])
@@ -238,4 +237,4 @@ class InferenceModel:
         for c in caches:
             c.length += 1
 
-        return self._logits(x)
+        return to_numpy(self._logits(x))

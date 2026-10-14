@@ -1,5 +1,4 @@
-import numpy as np
-
+from pytensorforge.backend import xp
 from pytensorforge.core.Tensor import Tensor
 
 
@@ -9,7 +8,7 @@ class Log:
     def forward(x):
 
         out = Tensor(
-            np.log(x.data),
+            xp.log(x.data),
             requires_grad=x.requires_grad,
             parents=(x,),
             op="Log",

@@ -1,5 +1,4 @@
-import numpy as np
-
+from pytensorforge.backend import xp
 from pytensorforge.core.Tensor import Tensor
 
 
@@ -8,7 +7,7 @@ class Exp:
     @staticmethod
     def forward(x):
 
-        e = np.exp(x.data)
+        e = xp.exp(x.data)
 
         out = Tensor(
             e,

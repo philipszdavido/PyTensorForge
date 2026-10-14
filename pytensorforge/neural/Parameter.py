@@ -1,12 +1,11 @@
-import numpy as np
-
+from pytensorforge.backend import xp
 from pytensorforge.core.Tensor import Tensor
 
 
 # class Parameter:
 #     def __init__(self, data, trainable=True, name=None):
-#         self.data = np.asarray(data, dtype=np.float32)
-#         self.grad = np.zeros_like(self.data)
+#         self.data = xp.asarray(data, dtype=xp.float32)
+#         self.grad = xp.zeros_like(self.data)
 #
 #         self.trainable = trainable
 #         self.name = name

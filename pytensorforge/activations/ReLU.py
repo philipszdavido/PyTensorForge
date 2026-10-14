@@ -1,5 +1,4 @@
-import numpy as np
-
+from pytensorforge.backend import xp
 from pytensorforge.activations.Activation import Activation
 from pytensorforge.core.Tensor import Tensor
 
@@ -9,7 +8,7 @@ class ReLU(Activation):
     @staticmethod
     def forward(x):
         out = Tensor(
-            np.maximum(0, x.data),
+            xp.maximum(0, x.data),
             requires_grad=x.requires_grad,
             parents=(x,),
             op="ReLU",
